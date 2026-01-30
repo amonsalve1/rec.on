@@ -2,6 +2,8 @@
 
 Anatoli Monsalve and Ethan Chen
 
+DEMO: https://www.youtube.com/watch?v=55O7b-9GzwY
+
 iOS app for making group decisions. Swipe through options, pick favorites, and get a winner.
 
 Note: This is a fresh repo. We had to start over because of too many merge conflicts when trying to combine the parts we built separately.
