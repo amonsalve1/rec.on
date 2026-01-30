@@ -1,5 +1,7 @@
 # RecOn
 
+Anatoli Monsalve and Ethan Chen
+
 iOS app for making group decisions. Swipe through options, pick favorites, and get a winner.
 
 Note: This is a fresh repo. We had to start over because of too many merge conflicts when trying to combine the parts we built separately.
