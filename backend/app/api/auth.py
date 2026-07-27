@@ -4,7 +4,8 @@ from sqlalchemy import func
 
 from ..errors import BadRequest, Conflict, Unauthorized
 from ..extensions import db, limiter
-from ..models import Profile, User
+from ..models import Profile, RefreshToken, User
+from ..models.token import hash_refresh_secret
 from ..models.user import (
     BCRYPT_ROUNDS,
     MAX_PASSWORD_BYTES,
@@ -12,6 +13,8 @@ from ..models.user import (
     USERNAME_RE,
 )
 from ..services import access_tokens, refresh_tokens
+from ..services.access_tokens import utcnow
+from .deps import current_user, require_auth
 
 bp = Blueprint("auth", __name__)
 
@@ -95,3 +98,56 @@ def login():
     payload = token_payload(user, request.headers.get("User-Agent"))
     db.session.commit()
     return jsonify(user=user.to_dict(), **payload), 200
+
+
+@bp.post("/refresh")
+@limiter.limit("30 per hour")
+def refresh():
+    raw = (body().get("refresh_token") or "").strip()
+    if not raw:
+        raise BadRequest("missing_refresh", "refresh_token is required")
+
+    user_id, raw_next, _ = refresh_tokens.rotate(raw, request.headers.get("User-Agent"))
+    user = db.session.get(User, user_id)
+    if user is None or user.deleted_at is not None:
+        raise Unauthorized("invalid_refresh", "user no longer exists")
+
+    access, expires_in = access_tokens.issue(user)
+    db.session.commit()
+    return jsonify(
+        access_token=access,
+        expires_in=expires_in,
+        refresh_token=raw_next,
+        refresh_expires_in=int(current_app.config["REFRESH_TOKEN_TTL"].total_seconds()),
+    )
+
+
+@bp.post("/logout")
+@require_auth
+def logout():
+    raw = (body().get("refresh_token") or "").strip()
+    if raw:
+        token = RefreshToken.query.filter_by(token_hash=hash_refresh_secret(raw)).one_or_none()
+        if token is not None and token.user_id == current_user().id:
+            refresh_tokens.revoke_family(token.family_id, "logout")
+    db.session.commit()
+    return "", 204
+
+
+@bp.post("/logout-all")
+@require_auth
+def logout_all():
+    user = current_user()
+    RefreshToken.query.filter_by(user_id=user.id, revoked_at=None).update(
+        {"revoked_at": utcnow(), "revoked_reason": "logout_all"}, synchronize_session=False
+    )
+    user.token_epoch += 1
+    db.session.commit()
+    return "", 204
+
+
+@bp.get("/me")
+@require_auth
+def me():
+    user = current_user()
+    return jsonify(user=user.to_dict(), profile=user.profile.to_dict())

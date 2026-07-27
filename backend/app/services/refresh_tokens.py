@@ -50,11 +50,11 @@ def rotate(raw, user_agent=None):
         raise Unauthorized("refresh_expired", "please sign in again")
 
     if token.is_revoked:
-        within_grace = (
-            token.revoked_reason == "rotation"
-            and (now - token.revoked_at) <= current_app.config["REFRESH_GRACE"]
-        )
-        if not within_grace:
+        if token.revoked_reason != "rotation":
+            # deliberately revoked (logout, password change, an earlier reuse).
+            # not a theft signal, so don't report it as one.
+            raise Unauthorized("invalid_refresh", "please sign in again")
+        if (now - token.revoked_at) > current_app.config["REFRESH_GRACE"]:
             revoke_family(token.family_id, "reuse_detected")
             db.session.commit()
             raise Unauthorized("refresh_reused", "please sign in again")
