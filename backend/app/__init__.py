@@ -13,6 +13,8 @@ def create_app(config=None):
     migrate.init_app(app, db)
     limiter.init_app(app)
 
+    from . import models  # noqa: F401  registers tables with alembic
+
     register_error_handlers(app)
 
     @app.get("/v1/health")
