@@ -16,8 +16,10 @@ def create_app(config=None):
     from . import models  # noqa: F401  registers tables with alembic
 
     from .api.auth import bp as auth_bp
+    from .api.parties import bp as parties_bp
 
     app.register_blueprint(auth_bp, url_prefix="/v1/auth")
+    app.register_blueprint(parties_bp, url_prefix="/v1/parties")
 
     register_error_handlers(app)
 
