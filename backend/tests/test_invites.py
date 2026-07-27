@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.models import Party
+from app.models import Option, Party
 from tests.conftest import invite_code
 
 
@@ -53,7 +53,13 @@ def test_cannot_join_once_swiping_has_started(client, app, host, guest, party):
     assert response.get_json()["error"]["code"] == "party_already_started"
 
 
-def test_start_requires_options(client, host, party):
+def test_start_refuses_a_party_with_nothing_to_vote_on(client, host, party):
+    """Creation now always produces options, so force the empty case."""
+    row = Party.query.filter_by(public_id=party["id"]).one()
+    Option.query.filter_by(party_id=row.id).delete()
+    row.option_count = 0
+    db.session.commit()
+
     response = client.post(f"/v1/parties/{party['id']}/start", headers=host)
     assert response.status_code == 422
     assert response.get_json()["error"]["code"] == "not_enough_options"
