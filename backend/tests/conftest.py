@@ -55,3 +55,32 @@ def auth_header():
         return {"Authorization": f"Bearer {session['access_token']}"}
 
     return _header
+
+
+@pytest.fixture
+def host(register, auth_header):
+    session = register(username="toli")
+    return auth_header(session)
+
+
+@pytest.fixture
+def guest(register, auth_header):
+    session = register(username="mei")
+    return auth_header(session)
+
+
+@pytest.fixture
+def party(client, host):
+    response = client.post(
+        "/v1/parties",
+        json={"title": "Dinner", "topic": "restaurant", "location": {"lat": 42.4534891, "lon": -76.4735249}},
+        headers=host,
+    )
+    assert response.status_code == 201, response.get_json()
+    return response.get_json()["party"]
+
+
+def invite_code(client, host, party):
+    response = client.post(f"/v1/parties/{party['id']}/invite", headers=host)
+    assert response.status_code == 201, response.get_json()
+    return response.get_json()["invite"]["code"]
