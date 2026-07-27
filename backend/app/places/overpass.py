@@ -89,3 +89,34 @@ def parse(payload):
             )
         )
     return candidates
+class OverpassProvider:
+    name = "overpass"
+
+    def __init__(self, user_agent, session=None, endpoint=ENDPOINT):
+        # overpass fair use asks for a contact address in the user agent
+        self.user_agent = user_agent
+        self.session = session or requests.Session()
+        self.endpoint = endpoint
+
+    def fetch(self, *, lat, lon, radius_m):
+        query = QUERY.format(amenities=AMENITIES, radius=radius_m, lat=lat, lon=lon)
+        last = None
+        for attempt in range(RETRIES + 1):
+            try:
+                response = self.session.post(
+                    self.endpoint,
+                    data={"data": query},
+                    headers={"User-Agent": self.user_agent},
+                    timeout=TIMEOUT_S,
+                )
+                response.raise_for_status()
+                return response.json()
+            except Exception as err:
+                last = err
+                log.warning("overpass attempt %s failed: %s", attempt + 1, err)
+        raise ProviderUnavailable(str(last))
+
+    def search(self, *, topic, lat, lon, radius_m, limit):
+        if lat is None or lon is None:
+            raise ProviderUnavailable("overpass needs coordinates")
+        return parse(self.fetch(lat=lat, lon=lon, radius_m=radius_m))[:limit]
