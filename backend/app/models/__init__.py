@@ -1,3 +1,4 @@
+from .token import RefreshToken
 from .user import Profile, User
 
-__all__ = ["Profile", "User"]
+__all__ = ["Profile", "RefreshToken", "User"]
