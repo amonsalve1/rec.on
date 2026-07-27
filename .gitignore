@@ -1,0 +1,38 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+instance/
+*.db
+*.sqlite3
+
+# xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.xcconfig.local
+
+# macos
+.DS_Store
+._*
+
+# editors
+.vscode/
+.idea/
+
+# working copies
+recon copy/
+*.zip
