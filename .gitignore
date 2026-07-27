@@ -36,3 +36,4 @@ build/
 # working copies
 recon copy/
 *.zip
+recon/rec.on/
