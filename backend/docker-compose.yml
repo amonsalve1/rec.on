@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: recon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recon}
+      POSTGRES_DB: recon
+    volumes:
+      # the old compose file had no volumes key at all, so every container
+      # restart silently wiped every account.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recon"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://recon:${POSTGRES_PASSWORD:-recon}@db:5432/recon
+    depends_on:
+      db:
+        condition: service_healthy
+    # bound to loopback on purpose: TLS terminates in front of this, and the
+    # api should never be reachable directly over plain http.
+    ports:
+      - "127.0.0.1:5000:5000"
+
+volumes:
+  pgdata:
