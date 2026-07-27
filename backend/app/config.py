@@ -41,6 +41,9 @@ class Config:
 
     SERVER_PEPPER = None
 
+    # overpass fair use asks for a contact address
+    OVERPASS_USER_AGENT = "recon/1.0"
+
     RATELIMIT_STORAGE_URI = "memory://"
     RATELIMIT_HEADERS_ENABLED = True
 
@@ -50,6 +53,7 @@ class Config:
         cls.JWT_SECRET_KEY = _required("JWT_SECRET_KEY")
         cls.JWT_SECRET_KEY_PREVIOUS = os.environ.get("JWT_SECRET_KEY_PREVIOUS") or None
         cls.SERVER_PEPPER = _required("SERVER_PEPPER").encode()
+        cls.OVERPASS_USER_AGENT = os.environ.get("OVERPASS_USER_AGENT", cls.OVERPASS_USER_AGENT)
         cls.RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
         return cls
 
