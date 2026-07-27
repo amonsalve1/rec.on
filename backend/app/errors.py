@@ -55,6 +55,10 @@ class Unprocessable(ApiError):
     status, code = 422, "unprocessable"
 
 
+class ServiceUnavailable(ApiError):
+    status, code = 503, "service_unavailable"
+
+
 def register_error_handlers(app):
     @app.errorhandler(ApiError)
     def handle_api_error(err):
