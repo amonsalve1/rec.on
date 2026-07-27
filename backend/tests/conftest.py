@@ -1,6 +1,7 @@
 import pytest
 
 from app import create_app
+from app.places.base import ProviderUnavailable
 from app.config import TestConfig
 from app.extensions import db as _db
 
@@ -84,3 +85,30 @@ def invite_code(client, host, party):
     response = client.post(f"/v1/parties/{party['id']}/invite", headers=host)
     assert response.status_code == 201, response.get_json()
     return response.get_json()["invite"]["code"]
+
+
+@pytest.fixture(autouse=True)
+def never_hit_the_network(monkeypatch):
+    """No test may call overpass for real.
+
+    Default is unavailable, so anything that does not explicitly stub a
+    payload falls back to the seed catalogue.
+    """
+
+    def fetch(self, *, lat, lon, radius_m):
+        raise ProviderUnavailable("network disabled in tests")
+
+    monkeypatch.setattr("app.places.overpass.OverpassProvider.fetch", fetch)
+
+
+@pytest.fixture
+def stub_overpass(monkeypatch):
+    def _stub(payload=None, fail=False):
+        def fetch(self, *, lat, lon, radius_m):
+            if fail:
+                raise ProviderUnavailable("stubbed failure")
+            return payload
+
+        monkeypatch.setattr("app.places.overpass.OverpassProvider.fetch", fetch)
+
+    return _stub
