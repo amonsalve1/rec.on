@@ -7,102 +7,141 @@
 
 import SwiftUI
 
+/// The slide-in side menu with the profile shortcut and settings entry.
 struct SideMenuView: View {
+
+    // MARK: - Properties
+
     let userName: String
     let profilePicturePath: String
     let onViewProfile: () -> Void
     let onSettings: () -> Void
 
+    // MARK: - Constants
+
+    private let avatarSize: CGFloat = 48
+    private let glyphSize: CGFloat = 32
+
+    // MARK: - UI
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            ZStack(alignment: .bottomTrailing) {
-                LinearGradient(
-                    colors: [
-                        Color(red: 1.0, green: 0.68, blue: 0.30),
-                        Color(red: 1.0, green: 0.58, blue: 0.30)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-
-                Image("SideMenuBlob")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 230)
-                    .offset(x: 40, y: 40)
-            }
+            background
 
             VStack(alignment: .leading, spacing: 24) {
-                Button(action: {
-                    onViewProfile()
-                }) {
-                    HStack(spacing: 12) {
-                        Group {
-                            if let image = loadProfileImage() {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .scaledToFill()
-                                    .foregroundColor(.white.opacity(0.8))
-                            }
-                        }
-                        .frame(width: 48, height: 48)
-                        .clipShape(Circle())
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(userName)
-                                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                            Text("View profile")
-                                .font(.system(size: 14, weight: .regular, design: .rounded))
-                                .foregroundColor(.black.opacity(0.7))
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
+                profileButton
 
                 Divider().background(Color.black.opacity(0.2))
 
-                VStack(alignment: .leading, spacing: 16) {
-                    Button(action: {
-                        onSettings()
-                    }) {
-                        MenuRow(systemName: "gearshape", title: "Settings")
-                    }
-                    .buttonStyle(.plain)
-                }
+                menuItems
 
                 Spacer()
             }
             .padding(.top, 20)
             .padding(.horizontal, 20)
 
-            Image("RecOnGlyph")
+            glyph
+        }
+    }
+
+    private var background: some View {
+        ZStack(alignment: .bottomTrailing) {
+            LinearGradient(
+                colors: [
+                    Constants.Colors.menuGradientTop,
+                    Constants.Colors.menuGradientBottom
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            Image("SideMenuBlob")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 32, height: 32)
-                .padding(.bottom, 24)
+                .frame(width: 230)
+                .offset(x: 40, y: 40)
         }
     }
-    
-    func loadProfileImage() -> UIImage? {
+
+    private var profileButton: some View {
+        Button {
+            onViewProfile()
+        } label: {
+            HStack(spacing: 12) {
+                avatar
+                    .frame(width: avatarSize, height: avatarSize)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(userName)
+                        .font(Constants.Fonts.subheading)
+
+                    Text("View profile")
+                        .font(Constants.Fonts.label)
+                        .foregroundColor(.black.opacity(0.7))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let image = loadProfileImage() {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .scaledToFill()
+                .foregroundColor(.white.opacity(0.8))
+        }
+    }
+
+    private var menuItems: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Button {
+                onSettings()
+            } label: {
+                MenuRow(systemName: "gearshape", title: "Settings")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var glyph: some View {
+        Image("RecOnGlyph")
+            .resizable()
+            .scaledToFit()
+            .frame(width: glyphSize, height: glyphSize)
+            .padding(.bottom, 24)
+    }
+
+    // MARK: - Helpers
+
+    /// Loads the saved avatar from the documents directory, or `nil` if none
+    /// has been saved yet.
+    private func loadProfileImage() -> UIImage? {
         guard !profilePicturePath.isEmpty else { return nil }
+
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let imageURL = documentsPath.appendingPathComponent(profilePicturePath)
-        
-        guard let imageData = try? Data(contentsOf: imageURL) else {
-            return nil
-        }
+
+        guard let imageData = try? Data(contentsOf: imageURL) else { return nil }
+
         return UIImage(data: imageData)
     }
+
 }
 
-struct SideMenuView_Previews: PreviewProvider {
-    static var previews: some View {
-        SideMenuView(userName: "User", profilePicturePath: "", onViewProfile: {}, onSettings: {})
-            .frame(width: 300)
-    }
+#Preview {
+    SideMenuView(
+        userName: "User",
+        profilePicturePath: "",
+        onViewProfile: {},
+        onSettings: {}
+    )
+    .frame(width: 300)
 }

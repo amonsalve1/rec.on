@@ -7,17 +7,28 @@
 
 import SwiftUI
 
+/// A single icon-and-title row inside the side menu.
 struct MenuRow: View {
+
+    // MARK: - Properties
+
     let systemName: String
     let title: String
+
+    // MARK: - UI
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: systemName)
-                .font(.system(size: 22, weight: .regular))
+                .font(Constants.Fonts.icon)
+
             Text(title)
-                .font(.system(size: 18, weight: .regular, design: .rounded))
+                .font(Constants.Fonts.bodyRounded)
         }
     }
+
 }
 
+#Preview {
+    MenuRow(systemName: "gearshape", title: "Settings")
+}

@@ -26,6 +26,12 @@ enum Constants {
         /// Soft peach used for subtle fills behind brand content.
         static let peach = Color(red: 1.0, green: 0.7, blue: 0.6)
 
+        /// Top color of the side menu gradient.
+        static let menuGradientTop = Color(red: 1.0, green: 0.68, blue: 0.30)
+
+        /// Bottom color of the side menu gradient.
+        static let menuGradientBottom = Color(red: 1.0, green: 0.58, blue: 0.30)
+
         /// Top color of the splash gradient.
         static let splashTop = Color(red: 1.0, green: 0.7, blue: 0.3)
 
@@ -67,8 +73,17 @@ enum Constants {
         /// Emphasized body text and button labels.
         static let bodySemibold = Font.system(size: 18, weight: .semibold, design: .rounded)
 
+        /// Rounded body text in menu rows.
+        static let bodyRounded = Font.system(size: 18, weight: .regular, design: .rounded)
+
+        /// Rounded titles in list rows.
+        static let rowTitle = Font.system(size: 17, weight: .regular, design: .rounded)
+
         /// Standard body text.
         static let body = Font.system(size: 16)
+
+        /// SF Symbol icons in menu rows.
+        static let icon = Font.system(size: 22)
 
         /// Secondary body text.
         static let bodySmall = Font.system(size: 14)

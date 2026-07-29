@@ -7,20 +7,35 @@
 
 import SwiftUI
 
+/// An avatar-and-name row for message lists.
 struct MessageRow: View {
+
+    // MARK: - Properties
+
     let name: String
     let imageName: String
+
+    // MARK: - Constants
+
+    private let avatarSize: CGFloat = 36
+
+    // MARK: - UI
 
     var body: some View {
         HStack(spacing: 12) {
             Image(imageName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 36, height: 36)
+                .frame(width: avatarSize, height: avatarSize)
                 .clipShape(Circle())
+
             Text(name)
-                .font(.system(size: 17, weight: .regular, design: .rounded))
+                .font(Constants.Fonts.rowTitle)
         }
     }
+
 }
 
+#Preview {
+    MessageRow(name: "Mei Mei", imageName: "friend1")
+}
