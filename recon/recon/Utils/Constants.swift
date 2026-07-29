@@ -1,0 +1,91 @@
+//
+//  Constants.swift
+//  recon
+//
+//  Created by Anatoli Monsalve on 7/27/2026.
+//
+
+import SwiftUI
+
+/// App-wide design tokens. All view code resolves colors, fonts, and shared
+/// spacing through this namespace instead of hardcoding literals.
+enum Constants {
+
+    /// The app color palette.
+    enum Colors {
+
+        /// Primary brand orange, used for buttons and highlights.
+        static let orangePrimary = Color(red: 1.0, green: 0.55, blue: 0.35)
+
+        /// Lighter companion orange, used in gradients and secondary accents.
+        static let orangeLight = Color(red: 1.0, green: 0.75, blue: 0.4)
+
+        /// Warm amber used in gradient midpoints.
+        static let amber = Color(red: 0.99, green: 0.77, blue: 0.45)
+
+        /// Soft peach used for subtle fills behind brand content.
+        static let peach = Color(red: 1.0, green: 0.7, blue: 0.6)
+
+        /// Top color of the splash gradient.
+        static let splashTop = Color(red: 1.0, green: 0.7, blue: 0.3)
+
+        /// Bottom color of the splash gradient.
+        static let splashBottom = Color(red: 1.0, green: 0.5, blue: 0.3)
+
+        /// Near-black used for primary text and dark surfaces.
+        static let ink = Color(red: 0.14, green: 0.14, blue: 0.14)
+
+        /// Neutral light background behind scrollable content.
+        static let background = Color(.systemGray6)
+
+    }
+
+    /// The app type scale. Display faces use the rounded design.
+    enum Fonts {
+
+        /// Extra-large display, for hero numerals and splash text.
+        static let display = Font.system(size: 32, weight: .bold, design: .rounded)
+
+        /// Screen titles.
+        static let title = Font.system(size: 28, weight: .bold, design: .rounded)
+
+        /// Section titles inside a screen.
+        static let heading = Font.system(size: 24, weight: .bold)
+
+        /// Card titles and emphasized rows.
+        static let subheading = Font.system(size: 20, weight: .semibold, design: .rounded)
+
+        /// Emphasized body text and button labels.
+        static let bodySemibold = Font.system(size: 18, weight: .semibold, design: .rounded)
+
+        /// Standard body text.
+        static let body = Font.system(size: 16)
+
+        /// Secondary body text.
+        static let bodySmall = Font.system(size: 14)
+
+        /// Captions and metadata.
+        static let caption = Font.system(size: 13)
+
+    }
+
+    /// Shared spacing values.
+    enum Padding {
+
+        /// Standard horizontal inset for screen content.
+        static let screenHorizontal: CGFloat = 16
+
+        /// Standard vertical rhythm between stacked sections.
+        static let sectionSpacing: CGFloat = 24
+
+    }
+
+    /// Shared animation curves.
+    enum Animations {
+
+        /// Spring used for the side menu and other sliding chrome.
+        static let menuSpring = Animation.spring(response: 0.45, dampingFraction: 0.85)
+
+    }
+
+}
