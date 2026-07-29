@@ -6,22 +6,20 @@
 //
 
 import SwiftUI
-import Foundation
 
-@main
-struct RecOnApp: App {
-    var body: some Scene {
-        WindowGroup {
-            RootView()
-        }
-    }
-}
-
+/// The root switcher that routes between sign-in, profile setup, onboarding,
+/// and the home screen based on persisted session state.
 struct RootView: View {
+
+    // MARK: - Properties
+
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("authToken") private var authToken: String = ""
     @AppStorage("needsProfileSetup") private var needsProfileSetup = false
+
     @State private var showSplash = true
+
+    // MARK: - UI
 
     var body: some View {
         ZStack {
@@ -41,45 +39,9 @@ struct RootView: View {
         .animation(.easeInOut, value: authToken.isEmpty)
         .animation(.easeInOut, value: needsProfileSetup)
     }
+
 }
 
-
-struct SplashView: View {
-    @Binding var showSplash: Bool
-    @State private var scale: CGFloat = 0.7
-    @State private var opacity: Double = 0.0
-
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 1.0, green: 0.7, blue: 0.3),
-                    Color(red: 1.0, green: 0.5, blue: 0.3)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 16) {
-                Image("RecOnLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 180)
-                    .scaleEffect(scale)
-                    .opacity(opacity)
-            }
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
-                scale = 1.0
-                opacity = 1.0
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation {
-                    showSplash = false
-                }
-            }
-        }
-    }
+#Preview {
+    RootView()
 }
