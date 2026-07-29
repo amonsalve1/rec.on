@@ -7,55 +7,93 @@
 
 import SwiftUI
 
+/// The horizontally scrolling row of friend avatars on the home screen.
 struct HomeFriendsSection: View {
+
+    // MARK: - Properties
+
     let friends: [Friend]
-    
+
+    // MARK: - Constants
+
+    private let avatarSize: CGFloat = 80
+
+    // MARK: - UI
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Friends")
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+            title
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 18) {
-                    ForEach(friends) { friend in
-                        VStack(spacing: 6) {
-                            let imageUrl = getFriendImageUrl(for: friend.name)
-                            AsyncImage(url: URL(string: imageUrl)) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                case .failure(_), .empty:
-                                    Image(systemName: "person.circle.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .foregroundColor(.orange)
-                                        .background(Color.orange.opacity(0.1))
-                                @unknown default:
-                                    Image(systemName: "person.circle.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .foregroundColor(.orange)
-                                        .background(Color.orange.opacity(0.1))
-                                }
-                            }
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-
-                            Text(friend.name)
-                                .font(.system(size: 14, weight: .medium, design: .rounded))
-                                .foregroundColor(.primary)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
+            friendsRow
         }
     }
-    
-    private func getFriendImageUrl(for name: String) -> String {
+
+    private var title: some View {
+        Text("Friends")
+            .font(Constants.Fonts.sectionTitle)
+    }
+
+    private var friendsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 18) {
+                ForEach(friends) { friend in
+                    friendCell(for: friend)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    // MARK: - Supporting
+
+    private func friendCell(for friend: Friend) -> some View {
+        VStack(spacing: 6) {
+            AsyncImage(url: URL(string: imageUrl(for: friend.name))) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure, .empty:
+                    avatarPlaceholder
+                @unknown default:
+                    avatarPlaceholder
+                }
+            }
+            .frame(width: avatarSize, height: avatarSize)
+            .clipShape(Circle())
+
+            Text(friend.name)
+                .font(Constants.Fonts.labelMedium)
+                .foregroundColor(.primary)
+        }
+    }
+
+    private var avatarPlaceholder: some View {
+        Image(systemName: "person.circle.fill")
+            .resizable()
+            .scaledToFit()
+            .foregroundColor(Constants.Colors.accent)
+            .background(Constants.Colors.accent.opacity(0.1))
+    }
+
+    // MARK: - Helpers
+
+    /// Deterministic placeholder image URL for a friend until the backend
+    /// serves real avatars.
+    private func imageUrl(for name: String) -> String {
         let seed = abs(name.hashValue) % 1000
         return "https://picsum.photos/seed/friend\(seed)/200/200"
     }
+
+}
+
+#Preview {
+    HomeFriendsSection(
+        friends: [
+            .init(name: "Mei Mei", imageName: "friend1"),
+            .init(name: "Larry", imageName: "friend2")
+        ]
+    )
+    .padding()
 }

@@ -32,6 +32,9 @@ enum Constants {
         /// Bottom color of the splash gradient.
         static let splashBottom = Color(red: 1.0, green: 0.5, blue: 0.3)
 
+        /// System orange used for card fills and small accents.
+        static let accent = Color.orange
+
         /// Near-black used for primary text and dark surfaces.
         static let ink = Color(red: 0.14, green: 0.14, blue: 0.14)
 
@@ -52,8 +55,14 @@ enum Constants {
         /// Section titles inside a screen.
         static let heading = Font.system(size: 24, weight: .bold)
 
+        /// Section titles on the home screen.
+        static let sectionTitle = Font.system(size: 22, weight: .semibold, design: .rounded)
+
         /// Card titles and emphasized rows.
         static let subheading = Font.system(size: 20, weight: .semibold, design: .rounded)
+
+        /// Titles on small cards.
+        static let cardTitle = Font.system(size: 15, weight: .semibold, design: .rounded)
 
         /// Emphasized body text and button labels.
         static let bodySemibold = Font.system(size: 18, weight: .semibold, design: .rounded)
@@ -63,6 +72,12 @@ enum Constants {
 
         /// Secondary body text.
         static let bodySmall = Font.system(size: 14)
+
+        /// Small rounded labels under avatars and cards.
+        static let label = Font.system(size: 14, weight: .regular, design: .rounded)
+
+        /// Emphasized small rounded labels, e.g. pill buttons.
+        static let labelMedium = Font.system(size: 14, weight: .medium, design: .rounded)
 
         /// Captions and metadata.
         static let caption = Font.system(size: 13)
