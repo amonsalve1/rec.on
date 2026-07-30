@@ -18,12 +18,14 @@ def create_app(config=None):
     from .api.auth import bp as auth_bp
     from .api.invites import bp as invites_bp
     from .api.parties import bp as parties_bp
+    from .api.picks import bp as picks_bp
     from .api.swipes import bp as swipes_bp
 
     app.register_blueprint(auth_bp, url_prefix="/v1/auth")
     app.register_blueprint(parties_bp, url_prefix="/v1/parties")
     app.register_blueprint(invites_bp, url_prefix="/v1/parties")
     app.register_blueprint(swipes_bp, url_prefix="/v1/parties")
+    app.register_blueprint(picks_bp, url_prefix="/v1/parties")
 
     register_error_handlers(app)
 

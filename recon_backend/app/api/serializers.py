@@ -26,9 +26,20 @@ def party_dict(party, members=None):
         "option_count": party.option_count,
         "member_count": party.member_count,
         "submitted_count": party.submitted_count,
+        "winner": party.winner_option.to_dict() if party.winner_option else None,
         "deadline_at": iso(party.swipe_deadline_at),
         "created_at": iso(party.created_at),
         "members": [member_dict(m) for m in members],
+    }
+
+
+def pick_dict(pick):
+    user = pick.user
+    return {
+        "user_id": user.id,
+        "username": user.username,
+        "display_name": user.profile.display_name if user.profile else user.username,
+        "option": pick.option.to_dict(),
     }
 
 
