@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PartySetupView: View {
-    @StateObject var viewModel = PartyViewModel()
+    @StateObject var viewModel = ViewModel()
     let onComplete: (() -> Void)?
     
     @State private var pg = 0

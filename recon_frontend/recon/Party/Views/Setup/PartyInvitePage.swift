@@ -10,7 +10,7 @@ import UIKit
 import Combine
 
 struct PartyInvitePage: View {
-    @ObservedObject var viewModel: PartyViewModel
+    @ObservedObject var viewModel: PartySetupView.ViewModel
     @State private var copied = false
     @State private var search = ""
     @State private var join = false

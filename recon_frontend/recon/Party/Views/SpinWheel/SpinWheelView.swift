@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SpinWheelView: View {
-    @ObservedObject var viewModel: PartyViewModel
+    @ObservedObject var viewModel: PartySetupView.ViewModel
     let onComplete: (() -> Void)?
     
     @State private var spin = false
@@ -16,7 +16,7 @@ struct SpinWheelView: View {
     @State private var navRes = false
     @Environment(\.dismiss) private var dismiss
     
-    init(viewModel: PartyViewModel, onComplete: (() -> Void)? = nil) {
+    init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }

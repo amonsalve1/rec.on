@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct WaitingForOthersView: View {
-    @ObservedObject var viewModel: PartyViewModel
+    @ObservedObject var viewModel: PartySetupView.ViewModel
     let onComplete: (() -> Void)?
     
     @State private var tmr: Timer?
     @State private var navSpin = false
     @Environment(\.dismiss) private var dismiss
     
-    init(viewModel: PartyViewModel, onComplete: (() -> Void)? = nil) {
+    init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }

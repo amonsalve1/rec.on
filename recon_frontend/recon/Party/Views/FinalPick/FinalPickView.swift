@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FinalPickView: View {
-    @ObservedObject var viewModel: PartyViewModel
+    @ObservedObject var viewModel: PartySetupView.ViewModel
     let onComplete: (() -> Void)?
     
     @State private var sel: PartyCandidate?
@@ -16,7 +16,7 @@ struct FinalPickView: View {
     @State private var navWait = false
     @Environment(\.dismiss) private var dismiss
     
-    init(viewModel: PartyViewModel, onComplete: (() -> Void)? = nil) {
+    init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }

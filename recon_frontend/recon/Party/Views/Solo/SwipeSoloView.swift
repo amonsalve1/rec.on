@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SwipeSoloView: View {
-    @ObservedObject var viewModel: SoloViewModel
+    @ObservedObject var viewModel: SoloFlowView.ViewModel
     let onComplete: (() -> Void)?
     
     @State private var i = 0
@@ -17,7 +17,7 @@ struct SwipeSoloView: View {
     @State private var showRes = false
     @Environment(\.dismiss) private var dismiss
     
-    init(viewModel: SoloViewModel, onComplete: (() -> Void)? = nil) {
+    init(viewModel: SoloFlowView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }

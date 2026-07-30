@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SoloFlowView: View {
-    @StateObject private var viewModel = SoloViewModel()
+    @StateObject private var viewModel = ViewModel()
     
     @State private var pg = 0
     @State private var start = false
