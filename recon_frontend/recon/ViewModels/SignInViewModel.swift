@@ -139,9 +139,10 @@ extension SignInView {
                     password: password
                 ) { result in
                     switch result {
-                    case .success(let token):
+                    case .success:
+                        // tokens are already in the keychain and hasSession is
+                        // set by the api layer; only the routing flags remain
                         Task { @MainActor in
-                            UserDefaults.standard.set(token, forKey: "authToken")
                             UserDefaults.standard.set(true, forKey: "needsProfileSetup")
                             UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
                         }
@@ -166,9 +167,8 @@ extension SignInView {
             await withCheckedContinuation { continuation in
                 RecOnAPI.shared.login(email: email, password: password) { result in
                     switch result {
-                    case .success(let token):
+                    case .success:
                         Task { @MainActor in
-                            UserDefaults.standard.set(token, forKey: "authToken")
                             UserDefaults.standard.set(false, forKey: "needsProfileSetup")
                         }
                     case .failure(let error):

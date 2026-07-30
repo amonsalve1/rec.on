@@ -11,6 +11,12 @@ import SwiftUI
 @main
 struct RecOnApp: App {
 
+    // MARK: - Init
+
+    init() {
+        TokenStore.bootstrap()
+    }
+
     // MARK: - UI
 
     var body: some Scene {

@@ -14,23 +14,28 @@ extension Notification.Name {
 struct APIConfig {
     static let baseURL = URL(string: "http://34.21.78.117")!
 
+    /// Non-secret flag the UI observes to gate signed-in state; the tokens
+    /// themselves live in the Keychain and are never in UserDefaults.
+    static var hasSession: Bool {
+        UserDefaults.standard.bool(forKey: "hasSession")
+    }
+
     static var authToken: String {
-        UserDefaults.standard.string(forKey: "authToken") ?? ""
+        TokenStore.accessToken ?? ""
     }
-    
+
     static var refreshToken: String {
-        UserDefaults.standard.string(forKey: "refreshToken") ?? ""
+        TokenStore.refreshToken ?? ""
     }
-    
+
     static func setTokens(accessToken: String, refreshToken: String) {
-        UserDefaults.standard.set(accessToken, forKey: "authToken")
-        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+        TokenStore.save(accessToken: accessToken, refreshToken: refreshToken)
+        UserDefaults.standard.set(true, forKey: "hasSession")
     }
-    
+
     static func clearAuthToken() {
-        UserDefaults.standard.removeObject(forKey: "authToken")
-        UserDefaults.standard.removeObject(forKey: "refreshToken")
+        TokenStore.clear()
+        UserDefaults.standard.set(false, forKey: "hasSession")
         NotificationCenter.default.post(name: .tokenExpired, object: nil)
     }
 }
-

@@ -38,7 +38,8 @@ extension RecOnAPI {
                 if let refresh = payload.refreshToken {
                     APIConfig.setTokens(accessToken: access, refreshToken: refresh)
                 } else {
-                    UserDefaults.standard.set(access, forKey: "authToken")
+                    TokenStore.saveAccessToken(access)
+                    UserDefaults.standard.set(true, forKey: "hasSession")
                 }
                 completion(.success(access))
             } else {

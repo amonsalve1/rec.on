@@ -14,7 +14,7 @@ struct RootView: View {
     // MARK: - Properties
 
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @AppStorage("authToken") private var authToken: String = ""
+    @AppStorage("hasSession") private var hasSession = false
     @AppStorage("needsProfileSetup") private var needsProfileSetup = false
 
     @State private var showSplash = true
@@ -23,7 +23,7 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            if authToken.isEmpty {
+            if !hasSession {
                 SignInView()
             } else if needsProfileSetup {
                 ProfileSetupView()
@@ -36,7 +36,7 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut, value: showSplash)
-        .animation(.easeInOut, value: authToken.isEmpty)
+        .animation(.easeInOut, value: hasSession)
         .animation(.easeInOut, value: needsProfileSetup)
     }
 
