@@ -7,85 +7,78 @@
 
 import Foundation
 
-struct BackendOption: Codable, Sendable {
-    let id: Int
-    let text: String
-}
-
+/// One member of a party, as serialized by the backend's member_dict.
 struct ParticipantDTO: Codable, Identifiable, Sendable {
-    let id: Int
+    let userId: Int
     let username: String?
-    let email: String?
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        
-        if let idValue = try? container.decode(Int.self) {
-            self.id = idValue
-            self.username = nil
-            self.email = nil
-            return
-        }
-        
-        let objectContainer = try decoder.container(keyedBy: CodingKeys.self)
-        id = try objectContainer.decode(Int.self, forKey: .id)
-        username = try objectContainer.decodeIfPresent(String.self, forKey: .username)
-        email = try objectContainer.decodeIfPresent(String.self, forKey: .email)
-    }
-    
+    let displayName: String?
+    let role: String?
+    let joinedAt: String?
+
+    var id: Int { userId }
+
+    var isHost: Bool { role == "host" }
+
     enum CodingKeys: String, CodingKey {
-        case id, username, email
+        case username, role
+        case userId = "user_id"
+        case displayName = "display_name"
+        case joinedAt = "joined_at"
     }
 }
 
-struct WinnerDTO: Codable, Sendable {
-    let option_id: String?
-    let option_name: String?
-    let option_details: [String: String]?
-    let picked_by: String?
-    let picked_by_user_id: Int?
-}
-
+/// A party as serialized by the backend's party_dict. Kept under the old
+/// SessionDTO name so the flow code reads the same.
 struct SessionDTO: Codable, Sendable {
-    let id: Int
-    let name: String
-    let typeSession: String
-    let createdBy: Int
-    let status: String
-    let options: [BackendOption]
-    let winner: WinnerDTO?
-    let participants: [ParticipantDTO]?
-    let createdAt: String
+    let id: String
+    let title: String
+    let topic: String
+    let state: String
+    let version: Int
+    let hostUserId: Int
+    let optionCount: Int
+    let memberCount: Int
+    let submittedCount: Int
+    let winner: OptionDTO?
+    let members: [ParticipantDTO]
+
+    /// Legacy accessors, so call sites written against the old API read on.
+    var createdBy: Int { hostUserId }
+    var status: String { state }
+    var participants: [ParticipantDTO]? { members }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, status, options, winner, participants
-        case typeSession = "type_session"
-        case createdBy   = "created_by"
-        case createdAt   = "created_at"
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        id = try container.decode(Int.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        typeSession = try container.decode(String.self, forKey: .typeSession)
-        createdBy = try container.decode(Int.self, forKey: .createdBy)
-        status = try container.decode(String.self, forKey: .status)
-        options = try container.decodeIfPresent([BackendOption].self, forKey: .options) ?? []
-        winner = try container.decodeIfPresent(WinnerDTO.self, forKey: .winner)
-        participants = try container.decodeIfPresent([ParticipantDTO].self, forKey: .participants)
-        createdAt = try container.decode(String.self, forKey: .createdAt)
+        case id, title, topic, state, version, winner, members
+        case hostUserId = "host_user_id"
+        case optionCount = "option_count"
+        case memberCount = "member_count"
+        case submittedCount = "submitted_count"
     }
 }
 
 struct SessionEnvelope: Codable, Sendable {
-    let session: SessionDTO
+    let party: SessionDTO
 }
 
-struct CreateSessionRequest: Encodable, Sendable {
-    let name: String
-    let type_session: String
-    let options: [String]
+struct OptionsEnvelope: Codable, Sendable {
+    let options: [OptionDTO]
 }
 
+struct InviteEnvelope: Codable, Sendable {
+    struct Invite: Codable, Sendable {
+        let code: String?
+    }
+
+    let invite: Invite
+}
+
+struct CreatePartyRequest: Encodable, Sendable {
+    struct Location: Encodable, Sendable {
+        let lat: Double
+        let lon: Double
+    }
+
+    let title: String
+    let topic: String
+    let location: Location?
+}

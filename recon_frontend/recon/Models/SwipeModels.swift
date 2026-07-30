@@ -8,37 +8,33 @@
 import Foundation
 
 struct RecordSwipeRequest: Encodable, Sendable {
-    let session_id: Int
     let option_id: Int
-    let option_name: String
-    let direction: String
+    let liked: Bool
+}
+
+/// One of the caller's own swipes, from GET swipes/me.
+struct SwipeDTO: Codable, Sendable {
+    let option_id: Int
+    let liked: Bool
 }
 
 struct SubmitFinalPickRequest: Encodable, Sendable {
-    let session_id: Int
     let option_id: Int
-    let option_name: String
-    let option_details: [String: String]?
 }
 
+/// One member's final pick, carrying the full option the backend stored.
 struct FinalPickDTO: Codable, Sendable {
-    let id: Int
-    let session_id: Int
     let user_id: Int
-    let option_id: String
-    let option_name: String
-    let option_details: [String: String]?
     let username: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id, session_id, user_id, option_id, option_name, option_details, username
-    }
+    let display_name: String?
+    let option: OptionDTO
 }
 
+/// One member's swipe progress for the waiting screen. Assembled client-side
+/// from the progress endpoint's per-member entries plus its option_count.
 struct ProgressDTO: Codable, Sendable {
     let user_id: Int
     let username: String
     let swipe_count: Int
     let total_options: Int
 }
-
