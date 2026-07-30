@@ -29,6 +29,14 @@ def spin(client, headers, party):
     return client.post(f"/v1/parties/{party['id']}/spin", headers=headers)
 
 
+def swipe(client, headers, party, option_id, liked=True):
+    return client.post(
+        f"/v1/parties/{party['id']}/swipes",
+        json={"option_id": option_id, "liked": liked},
+        headers=headers,
+    )
+
+
 def test_submitting_a_pick_counts_the_member_once(client, host, party):
     ids = option_ids(client, host, party)
     start(client, host, party)
@@ -168,4 +176,106 @@ def test_non_members_see_nothing(client, host, guest, party):
     assert pick(client, guest, party, ids[0]).status_code == 404
     assert client.get(f"/v1/parties/{party['id']}/picks", headers=guest).status_code == 404
     assert client.get(f"/v1/parties/{party['id']}/progress", headers=guest).status_code == 404
+    assert client.get(f"/v1/parties/{party['id']}/results", headers=guest).status_code == 404
     assert spin(client, guest, party).status_code == 404
+
+
+def test_highest_approval_beats_the_picks(client, host, guest, party):
+    """The approval count decides; picks only arbitrate ties."""
+    join(client, host, guest, party)
+    ids = option_ids(client, host, party)
+    start(client, host, party)
+
+    swipe(client, host, party, ids[0], liked=True)
+    swipe(client, guest, party, ids[0], liked=True)
+    swipe(client, guest, party, ids[1], liked=True)
+    pick(client, host, party, ids[1])
+    pick(client, guest, party, ids[1])
+
+    response = spin(client, host, party)
+    assert response.status_code == 200
+    assert response.get_json()["party"]["winner"]["id"] == ids[0]
+
+
+def test_tied_leaders_go_to_the_picked_option(client, host, guest, party):
+    """A zero-pick option can never win a tie lottery."""
+    join(client, host, guest, party)
+    ids = option_ids(client, host, party)
+    start(client, host, party)
+
+    swipe(client, host, party, ids[0], liked=True)
+    swipe(client, guest, party, ids[1], liked=True)
+    pick(client, host, party, ids[0])
+    pick(client, guest, party, ids[0])
+
+    response = spin(client, host, party)
+    assert response.status_code == 200
+    assert response.get_json()["party"]["winner"]["id"] == ids[0]
+
+
+def test_single_member_party_spins_from_likes_alone(client, host, party):
+    """The solo flow: no pick step, winner drawn from the liked options."""
+    ids = option_ids(client, host, party)
+    start(client, host, party)
+
+    swipe(client, host, party, ids[0], liked=True)
+    swipe(client, host, party, ids[1], liked=False)
+
+    response = spin(client, host, party)
+    assert response.status_code == 200
+    assert response.get_json()["party"]["winner"]["id"] == ids[0]
+
+
+def test_spin_with_no_signal_is_a_conflict(client, host, party):
+    option_ids(client, host, party)
+    start(client, host, party)
+
+    response = spin(client, host, party)
+    assert response.status_code == 409
+    assert response.get_json()["error"]["code"] == "no_votes"
+
+
+def test_a_leavers_votes_stop_counting(client, host, guest, party):
+    """The electorate is whoever is still in the party at spin time."""
+    join(client, host, guest, party)
+    ids = option_ids(client, host, party)
+    start(client, host, party)
+
+    swipe(client, guest, party, ids[1], liked=True)
+    swipe(client, host, party, ids[0], liked=True)
+    pick(client, host, party, ids[0])
+
+    left = client.post(f"/v1/parties/{party['id']}/leave", headers=guest)
+    assert left.status_code == 204
+
+    response = spin(client, host, party)
+    assert response.status_code == 200
+    assert response.get_json()["party"]["winner"]["id"] == ids[0]
+
+
+def test_results_reports_approvals_and_picks_per_option(client, host, guest, party):
+    join(client, host, guest, party)
+    ids = option_ids(client, host, party)
+    start(client, host, party)
+
+    swipe(client, host, party, ids[0], liked=True)
+    swipe(client, guest, party, ids[0], liked=True)
+    swipe(client, guest, party, ids[1], liked=False)
+    pick(client, host, party, ids[0])
+    pick(client, guest, party, ids[1])
+
+    response = client.get(f"/v1/parties/{party['id']}/results", headers=host)
+    assert response.status_code == 200
+    payload = response.get_json()
+    rows = {row["option"]["id"]: row for row in payload["results"]}
+
+    assert rows[ids[0]]["approvals"] == 2
+    assert rows[ids[0]]["picks"] == 1
+    assert rows[ids[1]]["approvals"] == 0
+    assert rows[ids[1]]["picks"] == 1
+    assert payload["results"][0]["option"]["id"] == ids[0]  # sorted by approvals
+    assert payload["winner"] is None
+
+    spin(client, host, party)
+    after = client.get(f"/v1/parties/{party['id']}/results", headers=host)
+    assert after.get_json()["winner"]["id"] == ids[0]

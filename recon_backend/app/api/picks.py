@@ -18,6 +18,64 @@ def _active_member_ids(party):
     return [m.user_id for m in party.members if m.status == "active"]
 
 
+def _approval_counts(party, active_ids):
+    """Liked-swipe count per option, counting only active members.
+
+    The composite PK on swipes means each member has at most one verdict per
+    option, so this is exactly the approval count. Members who left keep
+    their rows but lose their vote: the electorate is whoever is still in
+    the party when the spin happens.
+    """
+    rows = (
+        db.session.query(Swipe.option_id, func.count())
+        .filter(
+            Swipe.party_id == party.id,
+            Swipe.liked.is_(True),
+            Swipe.user_id.in_(active_ids),
+        )
+        .group_by(Swipe.option_id)
+        .all()
+    )
+    return dict(rows)
+
+
+def _pick_counts(party, active_ids):
+    return dict(
+        db.session.query(FinalPick.option_id, func.count())
+        .filter(FinalPick.party_id == party.id, FinalPick.user_id.in_(active_ids))
+        .group_by(FinalPick.option_id)
+        .all()
+    )
+
+
+def _choose_winner(approvals, picks):
+    """Approval voting with a pick-weighted lottery tiebreak.
+
+    1. The options with the highest approval count are the leaders.
+    2. A single leader wins outright.
+    3. Tied leaders go to a lottery weighted by how many final picks each
+       received — the lottery only ever arbitrates genuine ties.
+    4. If nobody liked anything, the picked options themselves are the
+       leaders (a pick is still a preference).
+    Returns the winning option_id, or None if there is no signal at all.
+    """
+    if approvals:
+        top = max(approvals.values())
+        leaders = [option_id for option_id, count in approvals.items() if count == top]
+    elif picks:
+        leaders = list(picks)
+    else:
+        return None
+
+    if len(leaders) == 1:
+        return leaders[0]
+
+    weights = [picks.get(option_id, 0) for option_id in leaders]
+    if sum(weights) == 0:
+        return secrets.choice(leaders)
+    return secrets.SystemRandom().choices(leaders, weights=weights, k=1)[0]
+
+
 @bp.post("/<public_id>/picks")
 @party_scope(require_state="swiping")
 def submit(public_id):
@@ -98,10 +156,52 @@ def progress(public_id):
     )
 
 
+@bp.get("/<public_id>/results")
+@party_scope()
+def results(public_id):
+    """Per-option approval and pick counts, plus the winner once spun.
+
+    The concurrency answers the mechanic depends on, in one place:
+    simultaneous swipes serialize through the composite-PK upsert and
+    re-submitting a pick replaces the old row, so a member can never be
+    counted twice; nobody can join after the lobby, so the electorate can
+    only shrink; a member who leaves (or is expired with the party) drops
+    out of both the approval electorate and the spin gate, so one vanished
+    client cannot wedge the vote forever.
+    """
+    party = current_party()
+    active_ids = _active_member_ids(party)
+    approvals = _approval_counts(party, active_ids)
+    picks = _pick_counts(party, active_ids)
+
+    options = (
+        Option.query.filter_by(party_id=party.id).order_by(Option.position.asc()).all()
+    )
+    rows = [
+        {
+            "option": option.to_dict(),
+            "approvals": approvals.get(option.id, 0),
+            "picks": picks.get(option.id, 0),
+        }
+        for option in options
+    ]
+    rows.sort(key=lambda row: (-row["approvals"], row["option"]["position"]))
+
+    return jsonify(
+        results=rows,
+        winner=party.winner_option.to_dict() if party.winner_option else None,
+        party_version=party.version,
+    )
+
+
 @bp.post("/<public_id>/spin")
 @party_scope(require_state=("swiping", "complete"))
 def spin(public_id):
-    """Pick the winner uniformly from the submitted final picks.
+    """Complete the party: approval voting, pick-weighted lottery on ties.
+
+    The gate: every active member must have submitted a final pick, except a
+    single-member party, which may spin straight from its liked swipes —
+    that is the solo flow, riding the same rule.
 
     Idempotent: once a winner exists, every later spin returns the same
     party unchanged, so racing clients all converge on one result.
@@ -110,23 +210,27 @@ def spin(public_id):
     if party.state == "complete":
         return jsonify(party=party_dict(party))
 
-    active_ids = set(_active_member_ids(party))
-    picks = [
-        p
-        for p in FinalPick.query.filter_by(party_id=party.id).all()
-        if p.user_id in active_ids
-    ]
-    if len(picks) < len(active_ids):
+    active_ids = _active_member_ids(party)
+    picks = _pick_counts(party, active_ids)
+    picked_members = (
+        db.session.query(func.count(FinalPick.user_id))
+        .filter(FinalPick.party_id == party.id, FinalPick.user_id.in_(active_ids))
+        .scalar()
+    )
+
+    if len(active_ids) > 1 and picked_members < len(active_ids):
         raise Conflict(
             "not_everyone_picked",
             "waiting on final picks",
-            details={"picked": len(picks), "needed": len(active_ids)},
+            details={"picked": picked_members, "needed": len(active_ids)},
         )
-    if not picks:
-        raise Conflict("no_picks", "nobody submitted a pick")
 
-    winner = secrets.choice(picks)
-    party.winner_option_id = winner.option_id
+    approvals = _approval_counts(party, active_ids)
+    winner_option_id = _choose_winner(approvals, picks)
+    if winner_option_id is None:
+        raise Conflict("no_votes", "nobody liked or picked anything")
+
+    party.winner_option_id = winner_option_id
     party.state = "complete"
     party.closed_at = utcnow()
     party.bump()
