@@ -26,7 +26,7 @@ In solo mode, you swipe through options yourself and get a random pick from your
   
 ### Backend
 
-The app connects to a Flask backend. The API base URL is configured in `recon/Party/API/APIConfig.swift`. Default is `http://34.21.78.117`.
+The app connects to a Flask backend (in `recon_backend/`). The API base URL is configured in `recon_frontend/recon/Party/API/APIConfig.swift`. Default is `http://34.21.78.117`.
 
 ## Features
 
