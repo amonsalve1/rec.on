@@ -1,0 +1,3 @@
+// Debug builds talk to a local backend (docker compose up in recon_backend).
+// The $() splits stop xcconfig from reading "//" as a comment.
+API_BASE_URL = http:/$()/localhost:5000

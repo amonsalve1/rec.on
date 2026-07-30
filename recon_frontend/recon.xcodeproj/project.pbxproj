@@ -12,6 +12,8 @@
 
 /* Begin PBXFileReference section */
 		C0A716012EE3A8F6008C4374 /* recon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = recon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0B2C0F1000000000000A001 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		C0B2C0F2000000000000A002 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -50,9 +52,19 @@
 		C0A7158A2EDEAB11008C4374 = {
 			isa = PBXGroup;
 			children = (
+				C0B2C0F3000000000000A003 /* Config */,
 				C0A715952EDEAB11008C4374 /* recon */,
 				C0A716012EE3A8F6008C4374 /* recon.app */,
 			);
+			sourceTree = "<group>";
+		};
+		C0B2C0F3000000000000A003 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				C0B2C0F1000000000000A001 /* Debug.xcconfig */,
+				C0B2C0F2000000000000A002 /* Release.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -141,6 +153,7 @@
 /* Begin XCBuildConfiguration section */
 		C0A7159C2EDEAB12008C4374 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0B2C0F1000000000000A001 /* Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -204,6 +217,7 @@
 		};
 		C0A7159D2EDEAB12008C4374 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0B2C0F2000000000000A002 /* Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

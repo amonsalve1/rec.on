@@ -1,0 +1,3 @@
+// Release builds are HTTPS-only. Replace the placeholder with the real
+// domain once DNS + TLS are live (see recon_backend/deploy/README.md).
+API_BASE_URL = https:/$()/api.recon.example
