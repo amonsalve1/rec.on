@@ -3,6 +3,7 @@ import logging
 import requests
 
 from .base import PlaceCandidate, ProviderUnavailable
+from .wikimedia import commons_file_url
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +67,23 @@ def build_tags(tags):
     return out
 
 
+def build_image(tags):
+    """An image URL straight from OSM tags, when the mapper provided one.
+
+    `image` is a direct URL; `wikimedia_commons` is a File: reference that
+    Special:FilePath can serve. Neither costs a network call.
+    """
+    image = (tags.get("image") or "").strip()
+    if image.startswith(("http://", "https://")):
+        return image
+
+    commons = (tags.get("wikimedia_commons") or "").strip()
+    if commons.startswith("File:"):
+        return commons_file_url(commons)
+
+    return None
+
+
 def parse(payload):
     """Turn an Overpass response into candidates, de-duplicated by name."""
     candidates, seen = [], set()
@@ -84,7 +102,9 @@ def parse(payload):
                 lat=element.get("lat", center.get("lat")),
                 lon=element.get("lon", center.get("lon")),
                 tags=build_tags(tags),
+                image_url=build_image(tags),
                 external_id=f"{element.get('type')}/{element.get('id')}",
+                wikidata=(tags.get("wikidata") or "").strip() or None,
                 raw=element,
             )
         )

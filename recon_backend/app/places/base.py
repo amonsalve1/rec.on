@@ -16,6 +16,9 @@ class PlaceCandidate:
     tags: list = field(default_factory=list)
     image_url: Optional[str] = None
     external_id: Optional[str] = None
+    # wikidata entity id (Q…) when upstream linked one; lets the resolver
+    # look up a commons image for candidates that carry no direct image
+    wikidata: Optional[str] = None
     raw: Optional[dict] = None
 
 
