@@ -37,3 +37,6 @@ build/
 recon copy/
 *.zip
 recon/rec.on/
+
+# local working copies of the spec
+BACKEND_SPEC_clean.md
