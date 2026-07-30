@@ -6,6 +6,7 @@
 //
 
 import Combine
+import CoreLocation
 import Foundation
 
 extension PartySetupView {
@@ -25,12 +26,10 @@ extension PartySetupView {
         @Published private(set) var hasSubmittedFinalPick: Bool = false
         @Published private(set) var allFinalPicks: [FinalPickDTO] = []
         @Published private(set) var progress: [ProgressDTO] = []
+        @Published private(set) var inviteCode: String?
 
         private(set) var session: SessionDTO?
         var candidateIdToOptionId = [UUID: Int]()
-        var imageMap = [String: String]()
-        var addressMap = [String: String]()
-        var tagsMap = [String: [String]]()
 
         let api = RecOnAPI.shared
 
@@ -45,13 +44,8 @@ extension PartySetupView {
         // MARK: - Computed Properties
 
         var allParticipantsHavePicked: Bool {
-            guard
-                let session = session,
-                let participants = session.participants
-            else {
-                return false
-            }
-            return allFinalPicks.count >= participants.count
+            guard let session = session else { return false }
+            return allFinalPicks.count >= session.members.count
         }
 
         var poolOfPicks: [PartyCandidate] {
@@ -60,63 +54,54 @@ extension PartySetupView {
 
         var backendWinner: PartyCandidate? {
             guard let winner = session?.winner else { return nil }
-
-            let imageUrl = winner.option_details?["image_url"]
-            let address = winner.option_details?["address"] ?? "Address not available"
-
-            let tags: [String] = {
-                if let tagString = winner.option_details?["tags"],
-                   let data = tagString.data(using: .utf8),
-                   let decoded = try? JSONDecoder().decode([String].self, from: data) {
-                    return decoded
-                }
-                return []
-            }()
-
-            return PartyCandidate(
-                backendId: Int(winner.option_id ?? ""),
-                name: winner.option_name ?? "Unknown",
-                address: address,
-                tags: tags,
-                imageName: "food1",
-                imageUrl: imageUrl
-            )
-        }
-
-        var inviteLinkString: String? {
-            guard let sessionId = session?.id else { return nil }
-            return api.baseURL.appendingPathComponent("\(sessionId)/join/").absoluteString
+            return PartyCandidate(from: winner)
         }
 
         // MARK: - Requests
 
-        /// Generates options for the topic, creates the backend session, and
-        /// loads its options.
+        /// Creates the party for the topic — the backend builds the option
+        /// deck, using our location when the topic wants nearby places.
         func startParty(topic: String, completion: @escaping (Bool) -> Void) {
             isLoading = true
             errorMessage = nil
             liked.removeAll()
             candidates.removeAll()
             candidateIdToOptionId.removeAll()
+            inviteCode = nil
 
             let backendTopic = topicMapping[topic.lowercased()] ?? topic.lowercased()
+            let title = topic.capitalized
 
-            PartyOptionsGenerator.generateOptions(for: topic) { options, imageMap, addressMap, tagsMap in
-                self.imageMap = imageMap
-                self.addressMap = addressMap
-                self.tagsMap = tagsMap
-                self.createSession(topic: backendTopic, options: options, completion: completion)
+            if backendTopic == "restaurant" {
+                Task { @MainActor in
+                    LocationService.shared.getCurrentLocation { [weak self] result in
+                        let location = (try? result.get()).map {
+                            CreatePartyRequest.Location(
+                                lat: $0.coordinate.latitude,
+                                lon: $0.coordinate.longitude
+                            )
+                        }
+                        self?.createParty(title: title, topic: backendTopic, location: location, completion: completion)
+                    }
+                }
+            } else {
+                createParty(title: title, topic: backendTopic, location: nil, completion: completion)
             }
         }
 
-        /// Creates the backend session and loads its options.
-        func createSession(topic: String, options: [String], completion: @escaping (Bool) -> Void) {
-            api.createSession(topic: topic, options: options) { result in
+        /// Creates the backend party and loads its server-built options.
+        func createParty(
+            title: String,
+            topic: String,
+            location: CreatePartyRequest.Location?,
+            completion: @escaping (Bool) -> Void
+        ) {
+            api.createParty(title: title, topic: topic, location: location) { result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let session):
                         self.session = session
-                        self.participants = session.participants ?? []
+                        self.participants = session.members
                         self.loadOptions(completion: completion)
                     case .failure:
                         self.isLoading = false
@@ -127,7 +112,7 @@ extension PartySetupView {
             }
         }
 
-        /// Fetches the session's options into `candidates`.
+        /// Fetches the party's options into `candidates`.
         func loadOptions(completion: @escaping (Bool) -> Void) {
             guard let sessionId = session?.id else {
                 errorMessage = "Missing session id."
@@ -141,13 +126,64 @@ extension PartySetupView {
                     self.isLoading = false
                     switch result {
                     case .success(let options):
-                        self.candidates = options.map { opt in
-                            self.mapToCandidate(from: opt)
+                        self.candidates = options.map { option in
+                            self.mapToCandidate(from: option)
                         }
                         completion(true)
                     case .failure:
                         self.errorMessage = "Failed to load options"
                         completion(false)
+                    }
+                }
+            }
+        }
+
+        /// Host: mints (or reuses) the invite code to share. Silently a no-op
+        /// for guests, who cannot mint.
+        func ensureInviteCode() {
+            guard inviteCode == nil, let sessionId = session?.id else { return }
+
+            api.mintInvite(sessionId: sessionId) { result in
+                DispatchQueue.main.async {
+                    if case .success(let code) = result {
+                        self.inviteCode = code
+                    }
+                }
+            }
+        }
+
+        /// Moves the party into swiping. The host starts it; a guest just
+        /// verifies the host already has.
+        func beginSwiping(completion: @escaping (Bool) -> Void) {
+            guard let sessionId = session?.id else {
+                completion(false)
+                return
+            }
+
+            if session?.state == "swiping" {
+                completion(true)
+                return
+            }
+
+            api.startParty(sessionId: sessionId) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let session):
+                        self.session = session
+                        completion(true)
+                    case .failure:
+                        // not the host, or already started: trust a refresh
+                        self.api.getSession(sessionId: sessionId) { refreshed in
+                            DispatchQueue.main.async {
+                                if case .success(let session) = refreshed, session.state == "swiping" {
+                                    self.session = session
+                                    completion(true)
+                                } else {
+                                    self.errorMessage = "Waiting for the host to start the party"
+                                    completion(false)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -162,31 +198,30 @@ extension PartySetupView {
                 return
             }
 
-            api.recordSwipe(
-                sessionId: sessionId,
-                optionId: optionId,
-                optionName: candidate.name,
-                liked: liked,
-                completion: nil
-            )
+            api.recordSwipe(sessionId: sessionId, optionId: optionId, liked: liked, completion: nil)
 
             if liked {
                 self.liked.append(candidate)
             }
         }
 
-        /// Fetches the caller's liked options for the final-pick screen.
+        /// Rebuilds the liked list for the final-pick screen from the
+        /// backend's record of our swipes.
         func loadLikedOptions(completion: @escaping (Bool) -> Void) {
             guard let sessionId = session?.id else {
                 completion(false)
                 return
             }
 
-            api.getLikedOptions(sessionId: sessionId) { result in
+            api.getMySwipes(sessionId: sessionId) { result in
                 DispatchQueue.main.async {
                     switch result {
-                    case .success(let options):
-                        self.likedOptions = options.map { self.mapToCandidate(from: $0) }
+                    case .success(let swipes):
+                        let likedIds = Set(swipes.filter(\.liked).map(\.option_id))
+                        self.likedOptions = self.candidates.filter { candidate in
+                            guard let optionId = self.candidateIdToOptionId[candidate.id] else { return false }
+                            return likedIds.contains(optionId)
+                        }
                         completion(true)
                     case .failure:
                         self.errorMessage = "Failed to load liked options"
@@ -206,14 +241,7 @@ extension PartySetupView {
                 return
             }
 
-            let details = candidateDetails(from: candidate)
-
-            api.submitFinalPick(
-                sessionId: sessionId,
-                optionId: optionId,
-                optionName: candidate.name,
-                optionDetails: details
-            ) { result in
+            api.submitFinalPick(sessionId: sessionId, optionId: optionId) { result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success:
@@ -261,18 +289,27 @@ extension PartySetupView {
             }
         }
 
-        /// Asks the backend to pick the session winner.
-        func spinWheel(completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        /// Asks the backend to draw the winner; the completed party (winner
+        /// included) replaces the session.
+        func spinWheel(completion: @escaping (Bool) -> Void) {
             guard let sessionId = session?.id else {
-                let error = NSError(
-                    domain: "PartyViewModel",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: "No session"]
-                )
-                completion(.failure(error))
+                completion(false)
                 return
             }
-            api.spinWheel(sessionId: sessionId, completion: completion)
+
+            api.spinWheel(sessionId: sessionId) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let session):
+                        self.session = session
+                        self.participants = session.members
+                        completion(true)
+                    case .failure:
+                        self.errorMessage = "Failed to spin the wheel"
+                        completion(false)
+                    }
+                }
+            }
         }
 
         /// Refreshes the participant list.
@@ -282,38 +319,30 @@ extension PartySetupView {
             api.getSession(sessionId: sessionId) { result in
                 DispatchQueue.main.async {
                     if case .success(let session) = result {
-                        self.participants = session.participants ?? []
-                    }
-                }
-            }
-        }
-
-        /// Refreshes the whole session, including the winner if chosen.
-        func refreshSession() {
-            guard let sessionId = session?.id else { return }
-
-            api.getSession(sessionId: sessionId) { result in
-                DispatchQueue.main.async {
-                    if case .success(let session) = result {
                         self.session = session
-                        self.participants = session.participants ?? []
+                        self.participants = session.members
                     }
                 }
             }
         }
 
-        /// Joins an existing session by id and loads its options.
-        func joinSession(sessionId: Int, completion: @escaping (Bool) -> Void) {
+        /// Refreshes the whole session, including the winner once chosen.
+        func refreshSession() {
+            refreshParticipants()
+        }
+
+        /// Joins an existing party by invite code and loads its options.
+        func joinParty(code: String, completion: @escaping (Bool) -> Void) {
             isLoading = true
             errorMessage = nil
 
-            api.joinSession(sessionId: sessionId) { result in
+            api.joinParty(code: code) { result in
                 DispatchQueue.main.async {
                     self.isLoading = false
                     switch result {
                     case .success(let session):
                         self.session = session
-                        self.participants = session.participants ?? []
+                        self.participants = session.members
                         self.loadOptions(completion: completion)
                     case .failure:
                         self.errorMessage = "Failed to join session"
@@ -327,41 +356,10 @@ extension PartySetupView {
 
         /// Builds a display candidate from a backend option, remembering the
         /// backend id for later swipes and picks.
-        func mapToCandidate(from opt: BackendOption) -> PartyCandidate {
-            let name = opt.text
-            let imageUrl = imageMap[name]
-            let address = addressMap[name] ?? "Address unknown"
-            let tags = tagsMap[name] ?? []
-
-            let candidate = PartyCandidate(
-                name: name,
-                address: address,
-                tags: tags,
-                imageName: "food1",
-                imageUrl: imageUrl
-            )
-            candidateIdToOptionId[candidate.id] = opt.id
+        func mapToCandidate(from option: OptionDTO) -> PartyCandidate {
+            let candidate = PartyCandidate(from: option)
+            candidateIdToOptionId[candidate.id] = option.id
             return candidate
-        }
-
-        /// Serializes a candidate's display details for the pick payload, or
-        /// `nil` if there is nothing to send.
-        func candidateDetails(from candidate: PartyCandidate) -> [String: String]? {
-            var details = [String: String]()
-
-            if let url = candidate.imageUrl {
-                details["image_url"] = url
-            }
-            if !candidate.address.isEmpty {
-                details["address"] = candidate.address
-            }
-            if !candidate.tags.isEmpty,
-               let data = try? JSONEncoder().encode(candidate.tags),
-               let json = String(data: data, encoding: .utf8) {
-                details["tags"] = json
-            }
-
-            return details.isEmpty ? nil : details
         }
 
     }

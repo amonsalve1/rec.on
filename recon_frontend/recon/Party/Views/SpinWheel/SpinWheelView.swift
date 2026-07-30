@@ -16,7 +16,7 @@ struct SpinWheelView: View {
     @ObservedObject var viewModel: PartySetupView.ViewModel
 
     @State private var spin = false
-    @State private var w: [String: Any]?
+    @State private var w: PartyCandidate?
     @State private var navRes = false
     @Environment(\.dismiss) private var dismiss
 
@@ -91,16 +91,14 @@ struct SpinWheelView: View {
 
     // MARK: - Supporting
 
-    private func winnerState(for w: [String: Any]) -> some View {
+    private func winnerState(for w: PartyCandidate) -> some View {
         VStack(spacing: 16) {
             Text("Winner selected!")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
 
-            if let name = w["option_name"] as? String {
-                Text(name)
-                    .font(Constants.Fonts.subheading)
-                    .foregroundColor(Constants.Colors.orangePrimary)
-            }
+            Text(w.name)
+                .font(Constants.Fonts.subheading)
+                .foregroundColor(Constants.Colors.orangePrimary)
 
             Button(action: {
                 navRes = true
@@ -134,14 +132,10 @@ struct SpinWheelView: View {
     private func spinWheel() {
         spin = true
 
-        viewModel.spinWheel { result in
+        viewModel.spinWheel { success in
             spin = false
-            switch result {
-            case .success(let data):
-                w = data
-                viewModel.refreshSession()
-            case .failure:
-                break
+            if success {
+                w = viewModel.backendWinner
             }
         }
     }

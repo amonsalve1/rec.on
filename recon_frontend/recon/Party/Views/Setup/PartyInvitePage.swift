@@ -39,7 +39,7 @@ struct PartyInvitePage: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .alert("Link copied", isPresented: $copied) {
+        .alert("Code copied", isPresented: $copied) {
             Button("OK", role: .cancel) { }
         }
         .alert("Join Error", isPresented: $joinErr) {
@@ -49,6 +49,7 @@ struct PartyInvitePage: View {
         }
         .onAppear {
             viewModel.refreshParticipants()
+            viewModel.ensureInviteCode()
         }
         .onReceive(Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()) { _ in
             viewModel.refreshParticipants()
@@ -76,7 +77,7 @@ struct PartyInvitePage: View {
 
     private var searchBar: some View {
         HStack(spacing: 8) {
-            TextField("Paste invite link or search for users...", text: $search)
+            TextField("Paste an invite code to join...", text: $search)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .onSubmit {
@@ -145,7 +146,7 @@ struct PartyInvitePage: View {
                 Image(systemName: "link")
                     .font(Constants.Fonts.iconSmall)
 
-                Text("Copy link to party")
+                Text(copyButtonTitle)
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
             }
             .foregroundColor(.white)
@@ -200,71 +201,37 @@ struct PartyInvitePage: View {
         return Constants.Colors.orangePrimary
     }
 
-    private func isJoinLink(_ text: String) -> Bool {
-        if text.contains("/join/") || text.contains("/join") {
-            return true
-        }
-        if Int(text.trimmingCharacters(in: .whitespaces)) != nil {
-            return true
-        }
-        return false
+    private var copyButtonTitle: String {
+        viewModel.inviteCode.map { "Copy code: \($0)" } ?? "Copy invite code"
     }
 
-    private func extractSessionId(from text: String) -> Int? {
+    /// Invite codes look like ABCDE-FGHIJ; the backend tolerates the dash
+    /// and casing being retyped away.
+    private func isJoinLink(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
-
-        if let id = Int(trimmed) {
-            return id
-        }
-
-        var urlString = trimmed
-        if !urlString.contains("://") {
-            urlString = "http://\(urlString)"
-        }
-
-        guard let url = URL(string: urlString) else {
-            return nil
-        }
-
-        let pathComponents = url.pathComponents.filter { $0 != "/" }
-
-        for (i, component) in pathComponents.enumerated() {
-            if component == "join" || component.hasPrefix("join") {
-                if i > 0, let id = Int(pathComponents[i - 1]) {
-                    return id
-                }
-            }
-        }
-
-        for component in pathComponents {
-            if let id = Int(component) {
-                return id
-            }
-        }
-
-        return nil
+        let cleaned = trimmed.replacingOccurrences(of: "-", with: "")
+        return cleaned.count >= 8 && cleaned.allSatisfy { $0.isLetter || $0.isNumber }
     }
 
     private func handleSearchOrJoin() {
-        guard !search.isEmpty else { return }
+        let code = search.trimmingCharacters(in: .whitespaces)
+        guard !code.isEmpty, isJoinLink(code) else { return }
 
-        if let id = extractSessionId(from: search) {
-            joinSession(sessionId: id)
-        }
+        joinParty(code: code)
     }
 
-    private func joinSession(sessionId: Int) {
+    private func joinParty(code: String) {
         join = true
         err = ""
 
-        viewModel.joinSession(sessionId: sessionId) { success in
+        viewModel.joinParty(code: code) { success in
             DispatchQueue.main.async {
                 join = false
                 if success {
                     search = ""
                     viewModel.refreshParticipants()
                 } else {
-                    err = "Failed to join session. Please check the link and try again."
+                    err = "Failed to join. Please check the code and try again."
                     joinErr = true
                 }
             }
@@ -272,8 +239,8 @@ struct PartyInvitePage: View {
     }
 
     private func copyInviteLink() {
-        if let link = viewModel.inviteLinkString {
-            UIPasteboard.general.string = link
+        if let code = viewModel.inviteCode {
+            UIPasteboard.general.string = code
             copied = true
             let generator = UINotificationFeedbackGenerator()
             generator.notificationOccurred(.success)

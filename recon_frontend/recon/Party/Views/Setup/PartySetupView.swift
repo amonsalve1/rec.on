@@ -133,8 +133,18 @@ struct PartySetupView: View {
                 pg = 1
             }
         } else {
-            guard viewModel.session != nil else { return }
-            navSwipe = true
+            guard viewModel.session != nil, !start else { return }
+            start = true
+            viewModel.beginSwiping { success in
+                DispatchQueue.main.async {
+                    start = false
+                    if success {
+                        navSwipe = true
+                    } else {
+                        err = true
+                    }
+                }
+            }
         }
     }
 
