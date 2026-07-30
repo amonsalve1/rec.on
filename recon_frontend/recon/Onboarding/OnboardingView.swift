@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// The first-launch intro: a black splash, then a paged carousel ending in
-/// the button that marks onboarding as seen.
+/// The first-launch intro: the brand moment, an interactive swipe tutorial,
+/// and a handoff — three pages traced by a squiggle progress line.
 struct OnboardingView: View {
 
     // MARK: - Properties
@@ -17,105 +17,68 @@ struct OnboardingView: View {
 
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
+    // MARK: - Constants
+
+    private let pageCount = 3
+
     // MARK: - UI
 
     var body: some View {
         ZStack {
-            Constants.Colors.surfaceDark.ignoresSafeArea()
+            background
 
-            if viewModel.showSplash {
-                RecOnSplashView(showSplash: $viewModel.showSplash)
-            } else {
-                VStack(spacing: 0) {
-                    introLabel
+            VStack(spacing: 0) {
+                pager
 
-                    pager
-
-                    footer
-                }
+                SquiggleProgress(
+                    progress: CGFloat(viewModel.currentPage + 1) / CGFloat(pageCount),
+                    tint: viewModel.currentPage == 0 ? .white : Constants.Colors.orangePrimary,
+                    track: viewModel.currentPage == 0
+                        ? .white.opacity(0.35)
+                        : Constants.Colors.orangeLight.opacity(0.35)
+                )
+                .frame(width: 140, height: 12)
+                .padding(.bottom, 28)
             }
         }
     }
 
-    private var introLabel: some View {
-        HStack {
-            Text("Intro")
-                .font(Constants.Fonts.bodyMediumRounded)
-                .foregroundColor(.white.opacity(0.7))
-                .padding(.leading, 24)
-                .padding(.top, Constants.Padding.screenHorizontal)
+    /// The warm brand field sits under page one and dissolves into the app
+    /// background as the pages advance.
+    private var background: some View {
+        ZStack {
+            Constants.Colors.background.ignoresSafeArea()
 
-            Spacer()
+            LinearGradient(
+                colors: [Constants.Colors.splashTop, Constants.Colors.splashBottom],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            .opacity(viewModel.currentPage == 0 ? 1 : 0)
+            .animation(.easeInOut(duration: 0.35), value: viewModel.currentPage)
         }
     }
 
     private var pager: some View {
         TabView(selection: $viewModel.currentPage) {
-            ForEach(Array(viewModel.pages.enumerated()), id: \.offset) { index, page in
-                OnboardingPageView(page: page)
-                    .tag(index)
+            OnboardingHelloPage()
+                .tag(0)
+
+            OnboardingSwipePage {
+                withAnimation {
+                    viewModel.currentPage = 2
+                }
             }
+            .tag(1)
+
+            OnboardingReadyPage {
+                hasSeenOnboarding = true
+            }
+            .tag(2)
         }
-        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+        .tabViewStyle(.page(indexDisplayMode: .never))
         .animation(.easeInOut, value: viewModel.currentPage)
-    }
-
-    private var footer: some View {
-        VStack(spacing: 20) {
-            pageDots
-
-            if viewModel.isOnLastPage {
-                readyButton
-            } else {
-                Spacer()
-                    .frame(height: 24)
-            }
-        }
-    }
-
-    private var pageDots: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<viewModel.pages.count, id: \.self) { index in
-                Circle()
-                    .frame(
-                        width: index == viewModel.currentPage ? 10 : 8,
-                        height: index == viewModel.currentPage ? 10 : 8
-                    )
-                    .foregroundColor(
-                        index == viewModel.currentPage
-                            ? Color.white
-                            : Color.white.opacity(0.4)
-                    )
-            }
-        }
-        .padding(.bottom, 8)
-    }
-
-    private var readyButton: some View {
-        Button {
-            hasSeenOnboarding = true
-        } label: {
-            Text("Yes!")
-                .font(Constants.Fonts.bodySemibold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Constants.Colors.orangeLight,
-                                    Constants.Colors.orangePrimary
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                )
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 24)
     }
 
 }
