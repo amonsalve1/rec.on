@@ -7,47 +7,71 @@
 
 import SwiftUI
 
+/// The first party setup page, where the host picks the topic everyone will
+/// swipe on.
 struct PartyTopicPage: View {
+
+    // MARK: - Properties
+
     let onTopicSelected: (String) -> Void
+
+    // MARK: - UI
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            HStack(alignment: .top) {
-                Text("What are you\nthinking?")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+            header
 
-                Spacer()
-
-                Text("🤔")
-                    .font(.system(size: 40))
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Common picks")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-
-                VStack(spacing: 10) {
-                    TopicBtn(title: "Food nearby") {
-                        onTopicSelected("food")
-                    }
-                    TopicBtn(title: "Study spots") {
-                        onTopicSelected("study")
-                    }
-                    TopicBtn(title: "Movies") {
-                        onTopicSelected("movie")
-                    }
-                }
-            }
+            commonPicks
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, 24)
         .padding(.top, 4)
     }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            Text("What are you\nthinking?")
+                .font(Constants.Fonts.display)
+
+            Spacer()
+
+            Text("🤔")
+                .font(.system(size: 40))
+        }
+    }
+
+    private var commonPicks: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Common picks")
+                .font(Constants.Fonts.bodySemibold)
+
+            VStack(spacing: 10) {
+                TopicBtn(title: "Food nearby") {
+                    onTopicSelected("food")
+                }
+
+                TopicBtn(title: "Study spots") {
+                    onTopicSelected("study")
+                }
+
+                TopicBtn(title: "Movies") {
+                    onTopicSelected("movie")
+                }
+            }
+        }
+    }
+
 }
 
+/// A full-width gradient pill button for a single topic pick.
 struct TopicBtn: View {
+
+    // MARK: - Properties
+
     let title: String
     let action: () -> Void
+
+    // MARK: - UI
 
     var body: some View {
         Button(action: action) {
@@ -59,8 +83,8 @@ struct TopicBtn: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.75, blue: 0.4),
-                            Color(red: 1.0, green: 0.55, blue: 0.35)
+                            Constants.Colors.orangeLight,
+                            Constants.Colors.orangePrimary
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -70,4 +94,9 @@ struct TopicBtn: View {
         }
         .buttonStyle(.plain)
     }
+
+}
+
+#Preview {
+    PartyTopicPage { _ in }
 }

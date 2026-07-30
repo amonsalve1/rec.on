@@ -7,47 +7,32 @@
 
 import SwiftUI
 
+/// An intro page with a practice swipe card, so users can try the swipe
+/// gesture and the like/dislike buttons before a real session.
 struct PartySwipeIntroPage: View {
+
+    // MARK: - Properties
+
     @State private var off: CGSize = .zero
     @State private var op: Double = 1.0
 
+    // MARK: - Constants
+
     private let swipeThreshold: CGFloat = 80
+
+    // MARK: - UI
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Text("Swipe swipe swipe!")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+            title
 
             Spacer().frame(height: 8)
 
-            ZStack {
-                swipeCard
-            }
-            .frame(height: 260)
+            cardArea
 
             Spacer()
 
-            HStack {
-                Spacer()
-
-                RoundBtn(
-                    systemName: "xmark",
-                    background: Color(red: 1.0, green: 0.7, blue: 0.6)
-                ) {
-                    handleSwipe(liked: false)
-                }
-
-                Spacer()
-
-                RoundBtn(
-                    systemName: "checkmark",
-                    background: Color(red: 0.99, green: 0.77, blue: 0.45)
-                ) {
-                    handleSwipe(liked: true)
-                }
-
-                Spacer()
-            }
+            actionButtons
 
             Spacer()
         }
@@ -55,39 +40,23 @@ struct PartySwipeIntroPage: View {
         .padding(.top, 32)
     }
 
+    private var title: some View {
+        Text("Swipe swipe swipe!")
+            .font(Constants.Fonts.title)
+    }
+
+    private var cardArea: some View {
+        ZStack {
+            swipeCard
+        }
+        .frame(height: 260)
+    }
+
     private var swipeCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image("food1")
-                .resizable()
-                .scaledToFill()
-                .frame(height: 160)
-                .clipped()
-                .cornerRadius(18)
+            cardImage
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Xi'an Street Food")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-
-                HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 13))
-                    Text("120 Dryden Rd, Ithaca, NY 14850")
-                }
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-
-                HStack(spacing: 6) {
-                    Tag(text: "College Town")
-                    Tag(text: "Chinese")
-                }
-
-                Text("Casual joint turning out fresh, authentic Xi'an fare such as hand-pulled noodles, spiced-meat buns.")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .lineLimit(3)
-            }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 14)
+            cardDetails
         }
         .background(Color.white)
         .cornerRadius(22)
@@ -116,6 +85,70 @@ struct PartySwipeIntroPage: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: off)
     }
 
+    private var cardImage: some View {
+        Image("food1")
+            .resizable()
+            .scaledToFill()
+            .frame(height: 160)
+            .clipped()
+            .cornerRadius(18)
+    }
+
+    private var cardDetails: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Xi'an Street Food")
+                .font(Constants.Fonts.subheading)
+
+            HStack(spacing: 4) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(Constants.Fonts.caption)
+
+                Text("120 Dryden Rd, Ithaca, NY 14850")
+            }
+            .font(Constants.Fonts.caption)
+            .foregroundColor(.secondary)
+
+            HStack(spacing: 6) {
+                Tag(text: "College Town")
+
+                Tag(text: "Chinese")
+            }
+
+            Text("Casual joint turning out fresh, authentic Xi'an fare such as hand-pulled noodles, spiced-meat buns.")
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(.secondary)
+                .lineLimit(3)
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 14)
+    }
+
+    private var actionButtons: some View {
+        HStack {
+            Spacer()
+
+            RoundBtn(
+                systemName: "xmark",
+                background: Constants.Colors.peach
+            ) {
+                handleSwipe(liked: false)
+            }
+
+            Spacer()
+
+            RoundBtn(
+                systemName: "checkmark",
+                background: Constants.Colors.amber
+            ) {
+                handleSwipe(liked: true)
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Helpers
+
     private func handleSwipe(liked: Bool) {
         let direction: CGFloat = liked ? 1 : -1
 
@@ -131,4 +164,9 @@ struct PartySwipeIntroPage: View {
             }
         }
     }
+
+}
+
+#Preview {
+    PartySwipeIntroPage()
 }

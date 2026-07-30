@@ -7,85 +7,117 @@
 
 import SwiftUI
 
+/// The two-page party setup flow: pick a topic, then invite friends before
+/// heading into the group swipe session.
 struct PartySetupView: View {
+
+    // MARK: - Properties
+
+    @Environment(\.dismiss) var dismiss
+
     @StateObject var viewModel = ViewModel()
-    let onComplete: (() -> Void)?
-    
+
     @State private var pg = 0
     @State private var start = false
     @State private var err = false
     @State private var navSwipe = false
     @State private var topic: String? = nil
-    @Environment(\.dismiss) var dismiss
-    
+
+    let onComplete: (() -> Void)?
+
     init(onComplete: (() -> Void)? = nil) {
         self.onComplete = onComplete
     }
 
+    // MARK: - Constants
+
+    private let dotSize: CGFloat = 6
+
+    // MARK: - UI
+
     var body: some View {
         VStack(spacing: 0) {
-                TabView(selection: $pg) {
-                    PartyTopicPage { topicKey in
-                        topic = topicKey
-                        startParty(with: topicKey)
-                    }
-                    .tag(0)
-                    
-                    PartyInvitePage(viewModel: viewModel)
-                        .tag(1)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+            pages
 
-                HStack(spacing: 8) {
-                    Circle()
-                        .frame(width: 6, height: 6)
-                        .foregroundColor(pg == 0 ? .primary : .secondary.opacity(0.4))
-                    Circle()
-                        .frame(width: 6, height: 6)
-                        .foregroundColor(pg == 1 ? .primary : .secondary.opacity(0.4))
-                }
-                .padding(.vertical, 10)
+            pageIndicator
 
-                Button(action: bottomButtonTapped) {
-                    Text(buttonText)
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.0, green: 0.75, blue: 0.4),
-                                    Color(red: 1.0, green: 0.55, blue: 0.35)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(22)
-                        .padding(.horizontal, 32)
+            bottomButton
+        }
+        .navigationTitle("Party")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $err) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.errorMessage ?? "Something went wrong.")
+        }
+        .navigationDestination(isPresented: $navSwipe) {
+            SwipePartyView(
+                viewModel: viewModel,
+                onComplete: {
+                    dismiss()
+                    onComplete?()
                 }
-                .disabled((start && pg == 0) || (pg == 0 && topic == nil))
-                .opacity((pg == 0 && topic == nil) ? 0.5 : 1.0)
-                .padding(.bottom, 24)
-            }
-            .navigationTitle("Party")
-            .navigationBarTitleDisplayMode(.inline)
-            .alert("Error", isPresented: $err) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.errorMessage ?? "Something went wrong.")
-            }
-            .navigationDestination(isPresented: $navSwipe) {
-                SwipePartyView(
-                    viewModel: viewModel,
-                    onComplete: {
-                        dismiss()
-                        onComplete?()
-                    }
-                )
-            }
+            )
+        }
     }
+
+    private var pages: some View {
+        TabView(selection: $pg) {
+            PartyTopicPage { topicKey in
+                topic = topicKey
+                startParty(with: topicKey)
+            }
+            .tag(0)
+
+            PartyInvitePage(viewModel: viewModel)
+                .tag(1)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+    }
+
+    private var pageIndicator: some View {
+        HStack(spacing: 8) {
+            pageDot(isActive: pg == 0)
+
+            pageDot(isActive: pg == 1)
+        }
+        .padding(.vertical, 10)
+    }
+
+    private var bottomButton: some View {
+        Button(action: bottomButtonTapped) {
+            Text(buttonText)
+                .font(Constants.Fonts.bodySemibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Constants.Colors.orangeLight,
+                            Constants.Colors.orangePrimary
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(22)
+                .padding(.horizontal, 32)
+        }
+        .disabled((start && pg == 0) || (pg == 0 && topic == nil))
+        .opacity((pg == 0 && topic == nil) ? 0.5 : 1.0)
+        .padding(.bottom, 24)
+    }
+
+    // MARK: - Supporting
+
+    private func pageDot(isActive: Bool) -> some View {
+        Circle()
+            .frame(width: dotSize, height: dotSize)
+            .foregroundColor(isActive ? .primary : .secondary.opacity(0.4))
+    }
+
+    // MARK: - Helpers
 
     var buttonText: String {
         if pg == 0 {
@@ -120,5 +152,12 @@ struct PartySetupView: View {
                 }
             }
         }
+    }
+
+}
+
+#Preview {
+    NavigationStack {
+        PartySetupView()
     }
 }
