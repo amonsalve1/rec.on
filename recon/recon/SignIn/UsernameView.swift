@@ -7,62 +7,79 @@
 
 import SwiftUI
 
+/// The sign-up wizard step asking for a username.
 struct UsernameView: View {
-    @Binding var username: String
-    @Binding var errorMessage: String?
-    let onNext: () -> Void
-    
+
+    // MARK: - Properties
+
+    @ObservedObject var viewModel: SignInView.ViewModel
+
+    // MARK: - UI
+
     var body: some View {
         VStack(spacing: 0) {
+            SignInBackButton {
+                viewModel.goBackFromUsername()
+            }
+
             Spacer()
-            
-            Image("RecOnLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 120)
-            
+
+            logo
+
             VStack(spacing: 24) {
-                Text("Choose a username")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14))
+                Text("Pick a username")
+                    .font(Constants.Fonts.heading)
+                    .foregroundColor(.black)
                     .multilineTextAlignment(.center)
                     .padding(.top, 32)
-                
-                TextField("username", text: $username)
-                    .font(.system(size: 16))
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(22)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-                    .onChange(of: username) { oldValue, newValue in
-                        if oldValue != newValue && newValue.count > oldValue.count {
-                            errorMessage = nil
-                        }
-                    }
-                
-                if let errorMessage = errorMessage {
+
+                field
+
+                if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
-                        .font(.system(size: 14))
+                        .font(Constants.Fonts.bodySmall)
                         .foregroundColor(.red)
                         .padding(.horizontal)
                 }
-                
-                Button(action: onNext) {
-                    Text("Next")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(username.isEmpty ? Color.gray : Color(red: 0.14, green: 0.14, blue: 0.14))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(username.isEmpty ? Color.gray.opacity(0.2) : Color.white)
-                        .cornerRadius(22)
+
+                SignInNextButton(
+                    title: "Next",
+                    isEnabled: !viewModel.username.isEmpty
+                ) {
+                    viewModel.advanceFromUsername()
                 }
-                .disabled(username.isEmpty)
             }
             .padding(.horizontal, 32)
-            
+
             Spacer()
         }
     }
+
+    private var logo: some View {
+        Image("RecOnLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 120, height: 120)
+    }
+
+    private var field: some View {
+        TextField("username", text: $viewModel.username)
+            .font(Constants.Fonts.body)
+            .padding()
+            .background(Color.white)
+            .cornerRadius(22)
+            .autocapitalization(.none)
+            .autocorrectionDisabled()
+            .onChange(of: viewModel.username) { oldValue, newValue in
+                if oldValue != newValue && newValue.count > oldValue.count {
+                    viewModel.errorMessage = nil
+                }
+            }
+    }
+
 }
 
+#Preview {
+    UsernameView(viewModel: SignInView.ViewModel())
+        .background(Constants.Colors.background)
+}

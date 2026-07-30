@@ -79,6 +79,12 @@ enum Constants {
         /// Rounded titles in list rows.
         static let rowTitle = Font.system(size: 17, weight: .regular, design: .rounded)
 
+        /// Button labels and emphasized UI text.
+        static let buttonLabel = Font.system(size: 18, weight: .semibold)
+
+        /// Large body text, e.g. taglines and nav bar titles.
+        static let bodyLarge = Font.system(size: 18)
+
         /// Standard body text.
         static let body = Font.system(size: 16)
 

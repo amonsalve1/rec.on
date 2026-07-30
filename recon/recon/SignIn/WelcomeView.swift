@@ -7,82 +7,75 @@
 
 import SwiftUI
 
+/// The sign-in landing step with the logo and the two mode buttons.
 struct WelcomeView: View {
-    let onSignUp: () -> Void
-    let onSignIn: () -> Void
-    
+
+    // MARK: - Properties
+
+    @ObservedObject var viewModel: SignInView.ViewModel
+
+    // MARK: - UI
+
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            
-            Image("RecOnLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 200, height: 200)
-            
+
+            logo
+
             Text("Recommend On the go.")
-                .font(.system(size: 18, weight: .regular))
-                .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14).opacity(0.7))
+                .font(Constants.Fonts.bodyLarge)
+                .foregroundColor(.gray)
                 .padding(.top, 16)
-            
+
             Spacer()
                 .frame(height: 80)
-            
-            VStack(spacing: 16) {
-                Button(action: onSignUp) {
-                    Text("Get Started")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 1.0, green: 0.55, blue: 0.35),
-                                    Color(red: 1.0, green: 0.3, blue: 0.2)
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(22)
-                }
-                
-                Button(action: onSignIn) {
-                    Text("Sign In")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 1.0, green: 0.65, blue: 0.4),
-                                    Color(red: 1.0, green: 0.5, blue: 0.3)
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(22)
-                }
-            }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 50)
-            
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(Color(red: 0.14, green: 0.14, blue: 0.14))
-                    .frame(width: 6, height: 6)
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 6, height: 6)
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 6, height: 6)
-            }
-            .padding(.bottom, 50)
+
+            modeButtons
+
+            SignInStepDots(total: 3, activeThrough: 0)
         }
     }
+
+    private var logo: some View {
+        Image("RecOnLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 200, height: 200)
+    }
+
+    private var modeButtons: some View {
+        VStack(spacing: 16) {
+            Button {
+                viewModel.begin(.signUp)
+            } label: {
+                Text("Get Started")
+                    .font(Constants.Fonts.buttonLabel)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Constants.Colors.accent)
+                    .cornerRadius(22)
+            }
+
+            Button {
+                viewModel.begin(.signIn)
+            } label: {
+                Text("Sign In")
+                    .font(Constants.Fonts.buttonLabel)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Constants.Colors.accent.opacity(0.9))
+                    .cornerRadius(20)
+            }
+        }
+        .padding(.horizontal, 32)
+        .padding(.bottom, 50)
+    }
+
 }
 
+#Preview {
+    WelcomeView(viewModel: SignInView.ViewModel())
+        .background(Constants.Colors.background)
+}
