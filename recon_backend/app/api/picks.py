@@ -1,7 +1,7 @@
 import secrets
 
 from flask import Blueprint, jsonify
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from ..errors import BadRequest, Conflict, NotFound
 from ..extensions import db
@@ -169,26 +169,53 @@ def results(public_id):
     out of both the approval electorate and the spin gate, so one vanished
     client cannot wedge the vote forever.
     """
-    party = current_party()
-    active_ids = _active_member_ids(party)
-    approvals = _approval_counts(party, active_ids)
-    picks = _pick_counts(party, active_ids)
+    from ..models import PartyMember
 
-    options = (
-        Option.query.filter_by(party_id=party.id).order_by(Option.position.asc()).all()
+    party = current_party()
+
+    # one round trip: options left-joined to their approval and pick
+    # aggregates, with the active electorate as a subquery. the naive
+    # version was three queries plus a lazy members load; the profile said
+    # the endpoint's time was round-trip wait, not work.
+    active = select(PartyMember.user_id).where(
+        PartyMember.party_id == party.id, PartyMember.status == "active"
     )
-    rows = [
-        {
-            "option": option.to_dict(),
-            "approvals": approvals.get(option.id, 0),
-            "picks": picks.get(option.id, 0),
-        }
-        for option in options
-    ]
-    rows.sort(key=lambda row: (-row["approvals"], row["option"]["position"]))
+    approvals_sq = (
+        select(Swipe.option_id, func.count().label("approvals"))
+        .where(
+            Swipe.party_id == party.id,
+            Swipe.liked.is_(True),
+            Swipe.user_id.in_(active),
+        )
+        .group_by(Swipe.option_id)
+        .subquery()
+    )
+    picks_sq = (
+        select(FinalPick.option_id, func.count().label("picks"))
+        .where(FinalPick.party_id == party.id, FinalPick.user_id.in_(active))
+        .group_by(FinalPick.option_id)
+        .subquery()
+    )
+    rows = db.session.execute(
+        select(
+            Option,
+            func.coalesce(approvals_sq.c.approvals, 0),
+            func.coalesce(picks_sq.c.picks, 0),
+        )
+        .outerjoin(approvals_sq, approvals_sq.c.option_id == Option.id)
+        .outerjoin(picks_sq, picks_sq.c.option_id == Option.id)
+        .where(Option.party_id == party.id)
+        .order_by(
+            func.coalesce(approvals_sq.c.approvals, 0).desc(),
+            Option.position.asc(),
+        )
+    ).all()
 
     return jsonify(
-        results=rows,
+        results=[
+            {"option": option.to_dict(), "approvals": approvals, "picks": picks}
+            for option, approvals, picks in rows
+        ],
         winner=party.winner_option.to_dict() if party.winner_option else None,
         party_version=party.version,
     )
