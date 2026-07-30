@@ -46,26 +46,9 @@ extension HomeView {
 
         // MARK: - Helpers
 
-        /// Loads the persisted recent picks from UserDefaults into `recentPicks`.
+        /// Loads the persisted recent picks into `recentPicks`.
         func loadRecentPicks() {
-            guard
-                let data = UserDefaults.standard.data(forKey: "recentPicks"),
-                let decoded = try? JSONDecoder().decode([RecentPickData].self, from: data)
-            else {
-                recentPicks = []
-                return
-            }
-
-            recentPicks = decoded.map { pickData in
-                FinalPick(
-                    id: pickData.id,
-                    name: pickData.name,
-                    imageUrl: pickData.imageUrl,
-                    address: pickData.address,
-                    tags: pickData.tags,
-                    timeAgo: pickData.timeAgo
-                )
-            }
+            recentPicks = RecentPicksStore.load()
         }
 
     }
