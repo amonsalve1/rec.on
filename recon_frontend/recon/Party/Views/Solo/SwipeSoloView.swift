@@ -7,85 +7,51 @@
 
 import SwiftUI
 
+/// The solo swipe deck: like or pass each candidate, then hand the likes to the results flow.
 struct SwipeSoloView: View {
+
+    // MARK: - Properties
+
     @ObservedObject var viewModel: SoloFlowView.ViewModel
-    let onComplete: (() -> Void)?
-    
+
     @State private var i = 0
     @State private var off: CGSize = .zero
     @State private var op: Double = 1.0
     @State private var showRes = false
+
     @Environment(\.dismiss) private var dismiss
-    
+
+    let onComplete: (() -> Void)?
+
     init(viewModel: SoloFlowView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }
-    
+
+    // MARK: - Constants
+
     private let swipeThreshold: CGFloat = 80
-    
+
+    // MARK: - UI
+
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Swipe swipe swipe!")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-            
+                .font(Constants.Fonts.title)
+
             Spacer().frame(height: 8)
-            
-            if i < viewModel.candidates.count {
-                let cand = viewModel.candidates[i]
-                
-                ZStack {
-                    swipeCard(for: cand)
-                }
-                .frame(height: 260)
-            } else {
-                VStack {
-                    Spacer()
-                    Text("Loading your favorites…")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .task {
-                    if !showRes {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showRes = true
-                        }
-                    }
-                }
-            }
-            
+
+            cardSection
+
             Spacer()
-            
-            if i < viewModel.candidates.count {
-                HStack {
-                    Spacer()
-                    
-                    RoundBtn(
-                        systemName: "xmark",
-                        background: Color(red: 1.0, green: 0.7, blue: 0.6)
-                    ) {
-                        handleSwipe(liked: false)
-                    }
-                    
-                    Spacer()
-                    
-                    RoundBtn(
-                        systemName: "checkmark",
-                        background: Color(red: 0.99, green: 0.77, blue: 0.45)
-                    ) {
-                        handleSwipe(liked: true)
-                    }
-                    
-                    Spacer()
-                }
-            }
-            
+
+            actionButtons
+
             Spacer()
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Color(.systemGray6).ignoresSafeArea())
+        .background(Constants.Colors.background.ignoresSafeArea())
         .navigationTitle("Solo")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showRes) {
@@ -100,57 +66,75 @@ struct SwipeSoloView: View {
             )
         }
     }
-    
+
+    @ViewBuilder
+    private var cardSection: some View {
+        if i < viewModel.candidates.count {
+            let cand = viewModel.candidates[i]
+
+            ZStack {
+                swipeCard(for: cand)
+            }
+            .frame(height: 260)
+        } else {
+            loadingState
+        }
+    }
+
+    private var loadingState: some View {
+        VStack {
+            Spacer()
+
+            Text("Loading your favorites…")
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+
+            Spacer()
+        }
+        .task {
+            if !showRes {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showRes = true
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        if i < viewModel.candidates.count {
+            HStack {
+                Spacer()
+
+                RoundBtn(
+                    systemName: "xmark",
+                    background: Constants.Colors.peach
+                ) {
+                    handleSwipe(liked: false)
+                }
+
+                Spacer()
+
+                RoundBtn(
+                    systemName: "checkmark",
+                    background: Constants.Colors.amber
+                ) {
+                    handleSwipe(liked: true)
+                }
+
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: - Supporting
+
+    /// The draggable card for the current candidate.
     private func swipeCard(for cand: PartyCandidate) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Group {
-                if let imageUrl = cand.imageUrl, !imageUrl.isEmpty, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure(_), .empty:
-                            Image(cand.imageName)
-                                .resizable()
-                                .scaledToFill()
-                        @unknown default:
-                            Image(cand.imageName)
-                                .resizable()
-                                .scaledToFill()
-                        }
-                    }
-                } else {
-                    Image(cand.imageName)
-                        .resizable()
-                        .scaledToFill()
-                }
-            }
-            .frame(height: 160)
-            .clipped()
-            .cornerRadius(18)
-            
-            VStack(alignment: .leading, spacing: 6) {
-                Text(cand.name)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 13))
-                    Text(cand.address)
-                }
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                
-                HStack(spacing: 6) {
-                    ForEach(cand.tags.prefix(3), id: \.self) { tag in
-                        Tag(text: tag)
-                    }
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 14)
+            cardImage(for: cand)
+
+            cardDetails(for: cand)
         }
         .background(Color.white)
         .cornerRadius(22)
@@ -178,29 +162,91 @@ struct SwipeSoloView: View {
         )
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: off)
     }
-    
+
+    private func cardImage(for cand: PartyCandidate) -> some View {
+        Group {
+            if let imageUrl = cand.imageUrl, !imageUrl.isEmpty, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure(_), .empty:
+                        Image(cand.imageName)
+                            .resizable()
+                            .scaledToFill()
+                    @unknown default:
+                        Image(cand.imageName)
+                            .resizable()
+                            .scaledToFill()
+                    }
+                }
+            } else {
+                Image(cand.imageName)
+                    .resizable()
+                    .scaledToFill()
+            }
+        }
+        .frame(height: 160)
+        .clipped()
+        .cornerRadius(18)
+    }
+
+    private func cardDetails(for cand: PartyCandidate) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(cand.name)
+                .font(Constants.Fonts.subheading)
+
+            HStack(spacing: 4) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(Constants.Fonts.caption)
+
+                Text(cand.address)
+            }
+            .font(Constants.Fonts.caption)
+            .foregroundColor(.secondary)
+
+            HStack(spacing: 6) {
+                ForEach(cand.tags.prefix(3), id: \.self) { tag in
+                    Tag(text: tag)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 14)
+    }
+
+    // MARK: - Helpers
+
+    /// Records the swipe, animates the card off screen, then advances the deck.
     private func handleSwipe(liked: Bool) {
         guard i < viewModel.candidates.count else { return }
-        
+
         let current = viewModel.candidates[i]
         let direction: CGFloat = liked ? 1 : -1
-        
+
         viewModel.recordSwipe(for: current, liked: liked)
-        
+
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             off = CGSize(width: direction * 600, height: 40)
             op = 0
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             off = .zero
             op = 1
             i += 1
         }
     }
+
 }
 
+/// A round icon action button shown under the swipe deck.
 struct RoundBtn: View {
+
+    // MARK: - Properties
+
     let systemName: String
     let background: Color
     let action: () -> Void
@@ -210,6 +256,8 @@ struct RoundBtn: View {
         self.background = background
         self.action = action
     }
+
+    // MARK: - UI
 
     var body: some View {
         Button {
@@ -227,18 +275,32 @@ struct RoundBtn: View {
         }
         .buttonStyle(.plain)
     }
+
 }
 
+/// A small orange pill label for a candidate tag.
 struct Tag: View {
+
+    // MARK: - Properties
+
     let text: String
+
+    // MARK: - UI
 
     var body: some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
-            .foregroundColor(.orange)
+            .foregroundColor(Constants.Colors.accent)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.orange.opacity(0.12))
+            .background(Constants.Colors.accent.opacity(0.12))
             .cornerRadius(12)
+    }
+
+}
+
+#Preview {
+    NavigationStack {
+        SwipeSoloView(viewModel: SoloFlowView.ViewModel())
     }
 }
