@@ -5,153 +5,55 @@
 //  Created by Ethan Chen on 12/5/2024.
 //
 
-import SwiftUI
 import PhotosUI
+import SwiftUI
 import UIKit
 
+/// The sheet for editing the user's name, location, and profile picture.
 struct EditProfileView: View {
+
+    // MARK: - Properties
+
     @Environment(\.dismiss) var dismiss
-    let currentName: String
-    let currentLocation: String
-    let currentProfilePicturePath: String
+    @StateObject private var viewModel: ViewModel
+
     let onSave: (String, String, String) -> Void
-    
-    @State private var name: String
-    @State private var location: String
-    @State private var selectedPhoto: PhotosPickerItem?
-    @State private var profileImage: UIImage?
-    @State private var profilePicturePath: String
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    
-    init(currentName: String, currentLocation: String, currentProfilePicturePath: String, onSave: @escaping (String, String, String) -> Void) {
-        self.currentName = currentName
-        self.currentLocation = currentLocation
-        self.currentProfilePicturePath = currentProfilePicturePath
+
+    // MARK: - Constants
+
+    private let avatarSize: CGFloat = 120
+
+    // MARK: - Init
+
+    init(
+        currentName: String,
+        currentLocation: String,
+        currentProfilePicturePath: String,
+        onSave: @escaping (String, String, String) -> Void
+    ) {
         self.onSave = onSave
-        _name = State(initialValue: currentName)
-        _location = State(initialValue: currentLocation)
-        _profilePicturePath = State(initialValue: currentProfilePicturePath)
+        _viewModel = StateObject(
+            wrappedValue: ViewModel(
+                name: currentName,
+                location: currentLocation,
+                picturePath: currentProfilePicturePath
+            )
+        )
     }
-    
+
+    // MARK: - UI
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.white
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 32) {
-                    VStack(spacing: 16) {
-                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                            Group {
-                                if let profileImage = profileImage {
-                                    Image(uiImage: profileImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                } else {
-                                    Image(systemName: "person.circle.fill")
-                                        .resizable()
-                                        .scaledToFill()
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                            .frame(width: 120, height: 120)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.orange, lineWidth: 3)
-                            )
-                            .overlay(
-                                Image(systemName: "camera.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.orange)
-                                    .clipShape(Circle())
-                                    .offset(x: 40, y: 40)
-                            )
-                        }
-                        
-                        Text("Tap to change photo")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.top, 40)
-                    
-                    VStack(spacing: 24) {
-                        Text("Edit Profile")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14))
-                            .multilineTextAlignment(.center)
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Name")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14))
-                            
-                            TextField("Your name", text: $name)
-                                .font(.system(size: 16))
-                                .padding()
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(12)
-                                .onChange(of: name) { oldValue, newValue in
-                                    errorMessage = nil
-                                }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Location")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14))
-                            
-                            TextField("Your location", text: $location)
-                                .font(.system(size: 16))
-                                .padding()
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(12)
-                                .onChange(of: location) { oldValue, newValue in
-                                    errorMessage = nil
-                                }
-                        }
-                        
-                        if let errorMessage = errorMessage {
-                            Text(errorMessage)
-                                .font(.system(size: 14))
-                                .foregroundColor(.red)
-                                .padding(.horizontal)
-                        }
-                        
-                        Button(action: {
-                            if !name.isEmpty {
-                                Task {
-                                    await saveProfile()
-                                }
-                            }
-                        }) {
-                            Text(isLoading ? "Saving..." : "Save")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(name.isEmpty || isLoading ? Color.gray : Color.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 56)
-                                .background(
-                                    Group {
-                                        if name.isEmpty || isLoading {
-                                            Color.gray.opacity(0.3)
-                                        } else {
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [Color.orange, Color.red]),
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        }
-                                    }
-                                )
-                                .cornerRadius(12)
-                        }
-                        .disabled(name.isEmpty || isLoading)
-                    }
-                    .padding(.horizontal, 32)
-                    
+                    photoSection
+
+                    formSection
+
                     Spacer()
                 }
             }
@@ -161,79 +63,165 @@ struct EditProfileView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(Color(red: 0.14, green: 0.14, blue: 0.14))
+                    .foregroundColor(Constants.Colors.ink)
                 }
             }
         }
-        .onChange(of: selectedPhoto) { oldValue, newValue in
+        .onChange(of: viewModel.selectedPhoto) { _, newValue in
             Task {
-                if let newValue = newValue {
-                    if let data = try? await newValue.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        await MainActor.run {
-                            profileImage = image
-                            saveImageToDocuments(image: image)
-                        }
-                    }
-                }
+                await viewModel.handlePhotoSelection(newValue)
             }
         }
         .task {
-            if !profilePicturePath.isEmpty {
-                await MainActor.run {
-                    profileImage = loadImage(from: profilePicturePath)
-                }
+            viewModel.loadExistingImage()
+        }
+    }
+
+    private var photoSection: some View {
+        VStack(spacing: 16) {
+            PhotosPicker(selection: $viewModel.selectedPhoto, matching: .images) {
+                avatar
+                    .frame(width: avatarSize, height: avatarSize)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Constants.Colors.accent, lineWidth: 3)
+                    )
+                    .overlay(cameraBadge)
             }
+
+            Text("Tap to change photo")
+                .font(Constants.Fonts.bodySmall)
+                .foregroundColor(.gray)
         }
+        .padding(.top, 40)
     }
-    
-    @MainActor
-    func loadImage(from path: String) -> UIImage? {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent(path)
-        
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        return UIImage(data: data)
-    }
-    
-    func saveImageToDocuments(image: UIImage) {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            return
-        }
-        
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileName = "profile_picture_\(UUID().uuidString).jpg"
-        let fileURL = docs.appendingPathComponent(fileName)
-        
-        do {
-            try imageData.write(to: fileURL)
-            profilePicturePath = fileName
-        } catch {
-        }
-    }
-    
-    func saveProfile() async {
-        await MainActor.run {
-            errorMessage = nil
-            isLoading = true
-        }
-        
-        UserDefaults.standard.set(name, forKey: "userName")
-        if !location.isEmpty {
-            UserDefaults.standard.set(location, forKey: "userLocation")
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let profileImage = viewModel.profileImage {
+            Image(uiImage: profileImage)
+                .resizable()
+                .scaledToFill()
         } else {
-            UserDefaults.standard.removeObject(forKey: "userLocation")
-        }
-        
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        
-        await MainActor.run {
-            isLoading = false
-            onSave(name, location, profilePicturePath)
-            dismiss()
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .scaledToFill()
+                .foregroundColor(.gray)
         }
     }
+
+    private var cameraBadge: some View {
+        Image(systemName: "camera.fill")
+            .font(Constants.Fonts.iconLarge)
+            .foregroundColor(.white)
+            .frame(width: 40, height: 40)
+            .background(Constants.Colors.accent)
+            .clipShape(Circle())
+            .offset(x: 40, y: 40)
+    }
+
+    private var formSection: some View {
+        VStack(spacing: 24) {
+            Text("Edit Profile")
+                .font(Constants.Fonts.headingMedium)
+                .foregroundColor(Constants.Colors.ink)
+                .multilineTextAlignment(.center)
+
+            field(
+                label: "Name",
+                placeholder: "Your name",
+                text: $viewModel.name
+            )
+
+            field(
+                label: "Location",
+                placeholder: "Your location",
+                text: $viewModel.location
+            )
+
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .font(Constants.Fonts.bodySmall)
+                    .foregroundColor(Constants.Colors.danger)
+                    .padding(.horizontal)
+            }
+
+            saveButton
+        }
+        .padding(.horizontal, 32)
+    }
+
+    private var saveButton: some View {
+        Button {
+            guard viewModel.canSave else { return }
+            Task {
+                await viewModel.save()
+                onSave(
+                    viewModel.name,
+                    viewModel.location,
+                    viewModel.profilePicturePath
+                )
+                dismiss()
+            }
+        } label: {
+            Text(viewModel.isLoading ? "Saving..." : "Save")
+                .font(Constants.Fonts.buttonLabel)
+                .foregroundColor(viewModel.canSave ? .white : .gray)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(saveButtonBackground)
+                .cornerRadius(12)
+        }
+        .disabled(!viewModel.canSave)
+    }
+
+    @ViewBuilder
+    private var saveButtonBackground: some View {
+        if viewModel.canSave {
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Constants.Colors.accent,
+                    Constants.Colors.danger
+                ]),
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        } else {
+            Color.gray.opacity(0.3)
+        }
+    }
+
+    // MARK: - Supporting
+
+    private func field(
+        label: String,
+        placeholder: String,
+        text: Binding<String>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(Constants.Fonts.fieldLabel)
+                .foregroundColor(Constants.Colors.ink)
+
+            TextField(placeholder, text: text)
+                .font(Constants.Fonts.body)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+                .onChange(of: text.wrappedValue) { _, _ in
+                    viewModel.errorMessage = nil
+                }
+        }
+    }
+
 }
 
+#Preview {
+    EditProfileView(
+        currentName: "Anatoli",
+        currentLocation: "Ithaca, NY",
+        currentProfilePicturePath: "",
+        onSave: { _, _, _ in }
+    )
+}

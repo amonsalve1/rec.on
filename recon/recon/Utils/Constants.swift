@@ -44,6 +44,9 @@ enum Constants {
         /// Near-black used for primary text and dark surfaces.
         static let ink = Color(red: 0.14, green: 0.14, blue: 0.14)
 
+        /// Destructive and error accents.
+        static let danger = Color.red
+
         /// Neutral light background behind scrollable content.
         static let background = Color(.systemGray6)
 
@@ -73,6 +76,12 @@ enum Constants {
         /// Titles on small cards.
         static let cardTitle = Font.system(size: 15, weight: .semibold, design: .rounded)
 
+        /// Form and sheet headings.
+        static let headingMedium = Font.system(size: 24, weight: .semibold)
+
+        /// Labels above form fields.
+        static let fieldLabel = Font.system(size: 14, weight: .medium)
+
         /// Emphasized body text and button labels.
         static let bodySemibold = Font.system(size: 18, weight: .semibold, design: .rounded)
 
@@ -93,6 +102,9 @@ enum Constants {
 
         /// SF Symbol icons in menu rows.
         static let icon = Font.system(size: 22)
+
+        /// Large SF Symbol icons, e.g. the camera badge.
+        static let iconLarge = Font.system(size: 24)
 
         /// Secondary body text.
         static let bodySmall = Font.system(size: 14)
