@@ -38,13 +38,30 @@ struct PartyResultsFlowView: View {
                 step = 1
             }
         } else if step == 1 {
-            RandomizingPage(candidates: candidates, forced: backendWinner) { picked in
+            RandomizingPage(candidates: carouselPool, forced: backendWinner) { picked in
                 winner = picked
                 step = 2
             }
-        } else if let winner = winner {
+        } else if let winner = backendWinner ?? winner {
+            // the backend's winner is the truth; the animation's landing
+            // card is only a fallback when no server winner exists
             WinnerPage(winner: winner, onComplete: onComplete)
         }
+    }
+
+    // MARK: - Helpers
+
+    /// The cards the randomizer cycles through. Under approval voting the
+    /// winner isn't necessarily anyone's final pick, so it is appended when
+    /// the pick pool doesn't already contain it — the carousel must be able
+    /// to land on it.
+    private var carouselPool: [PartyCandidate] {
+        guard let backendWinner else { return candidates }
+
+        let containsWinner = candidates.contains { candidate in
+            candidate.backendId != nil && candidate.backendId == backendWinner.backendId
+        }
+        return containsWinner ? candidates : candidates + [backendWinner]
     }
 
 }
