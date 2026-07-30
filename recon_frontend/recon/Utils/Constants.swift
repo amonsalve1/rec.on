@@ -44,6 +44,9 @@ enum Constants {
         /// Near-black used for primary text and dark surfaces.
         static let ink = Color(red: 0.14, green: 0.14, blue: 0.14)
 
+        /// Slightly lighter dark surface behind onboarding.
+        static let surfaceDark = Color(red: 0.2, green: 0.2, blue: 0.2)
+
         /// Destructive and error accents.
         static let danger = Color.red
 
@@ -106,8 +109,20 @@ enum Constants {
         /// Large SF Symbol icons, e.g. the camera badge.
         static let iconLarge = Font.system(size: 24)
 
+        /// Small emphasized SF Symbol icons, e.g. onboarding bullets.
+        static let iconSmall = Font.system(size: 16, weight: .semibold)
+
+        /// Hero emoji on onboarding pages.
+        static let emojiDisplay = Font.system(size: 80)
+
         /// Secondary body text.
         static let bodySmall = Font.system(size: 14)
+
+        /// Rounded body copy on onboarding pages.
+        static let bodyRegularRounded = Font.system(size: 16, weight: .regular, design: .rounded)
+
+        /// Rounded medium labels, e.g. the onboarding "Intro" tag.
+        static let bodyMediumRounded = Font.system(size: 16, weight: .medium, design: .rounded)
 
         /// Small rounded labels under avatars and cards.
         static let label = Font.system(size: 14, weight: .regular, design: .rounded)

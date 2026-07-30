@@ -7,127 +7,119 @@
 
 import SwiftUI
 
+/// The first-launch intro: a black splash, then a paged carousel ending in
+/// the button that marks onboarding as seen.
 struct OnboardingView: View {
-    @State private var currentPage: Int = 0
-    @State private var showSplash: Bool = true
+
+    // MARK: - Properties
+
+    @StateObject private var viewModel = ViewModel()
+
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
-    private let pages: [OnboardingPage] = [
-        OnboardingPage(
-            emoji: nil,
-            largeText: "Welcome to your new activity finder!",
-            smallText: nil,
-            bulletPoints: nil
-        ),
-        OnboardingPage(
-            emoji: "⁉️",
-            largeText: "Bored?",
-            smallText: "Looking for something to do with friends? Or itching to explore your surroundings?",
-            bulletPoints: nil
-        ),
-        OnboardingPage(
-            emoji: "👋",
-            largeText: "Meet your new inspiration!",
-            smallText: "Swipe to decide. Remember what you like. Discover more.",
-            bulletPoints: nil
-        ),
-        OnboardingPage(
-            emoji: "🛠️",
-            largeText: "How it works",
-            smallText: nil,
-            bulletPoints: [
-                OnboardingPage.BulletPoint(icon: "arrow.right", text: "Swipe right to pick, left to discard"),
-                OnboardingPage.BulletPoint(icon: "arrow.triangle.2.circlepath", text: "Randomly choose from you and your friends' picks"),
-                OnboardingPage.BulletPoint(icon: "star.fill", text: "Find your next favorite thing")
-            ]
-        ),
-        OnboardingPage(
-            emoji: "😆",
-            largeText: "Are you ready?",
-            smallText: nil,
-            bulletPoints: nil
-        )
-    ]
+    // MARK: - UI
 
     var body: some View {
         ZStack {
-            Color(red: 0.2, green: 0.2, blue: 0.2).ignoresSafeArea()
+            Constants.Colors.surfaceDark.ignoresSafeArea()
 
-            if showSplash {
-                RecOnSplashView(showSplash: $showSplash)
+            if viewModel.showSplash {
+                RecOnSplashView(showSplash: $viewModel.showSplash)
             } else {
                 VStack(spacing: 0) {
-                    HStack {
-                        Text("Intro")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(.leading, 24)
-                            .padding(.top, 16)
-                        Spacer()
-                    }
+                    introLabel
 
-                    TabView(selection: $currentPage) {
-                        ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                            OnboardingPageView(page: page)
-                                .tag(index)
-                        }
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .animation(.easeInOut, value: currentPage)
+                    pager
 
-                    VStack(spacing: 20) {
-                        HStack(spacing: 8) {
-                            ForEach(0..<pages.count, id: \.self) { index in
-                                Circle()
-                                    .frame(width: index == currentPage ? 10 : 8,
-                                           height: index == currentPage ? 10 : 8)
-                                    .foregroundColor(
-                                        index == currentPage
-                                        ? Color.white
-                                        : Color.white.opacity(0.4)
-                                    )
-                            }
-                        }
-                        .padding(.bottom, 8)
-
-                        if currentPage == pages.count - 1 {
-                            Button(action: {
-                                hasSeenOnboarding = true
-                            }) {
-                                Text("Yes!")
-                                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(red: 1.0, green: 0.75, blue: 0.4),
-                                                        Color(red: 1.0, green: 0.55, blue: 0.35)
-                                                    ],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                    )
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 24)
-                        } else {
-                            Spacer()
-                                .frame(height: 24)
-                        }
-                    }
+                    footer
                 }
             }
         }
     }
+
+    private var introLabel: some View {
+        HStack {
+            Text("Intro")
+                .font(Constants.Fonts.bodyMediumRounded)
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.leading, 24)
+                .padding(.top, Constants.Padding.screenHorizontal)
+
+            Spacer()
+        }
+    }
+
+    private var pager: some View {
+        TabView(selection: $viewModel.currentPage) {
+            ForEach(Array(viewModel.pages.enumerated()), id: \.offset) { index, page in
+                OnboardingPageView(page: page)
+                    .tag(index)
+            }
+        }
+        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+        .animation(.easeInOut, value: viewModel.currentPage)
+    }
+
+    private var footer: some View {
+        VStack(spacing: 20) {
+            pageDots
+
+            if viewModel.isOnLastPage {
+                readyButton
+            } else {
+                Spacer()
+                    .frame(height: 24)
+            }
+        }
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<viewModel.pages.count, id: \.self) { index in
+                Circle()
+                    .frame(
+                        width: index == viewModel.currentPage ? 10 : 8,
+                        height: index == viewModel.currentPage ? 10 : 8
+                    )
+                    .foregroundColor(
+                        index == viewModel.currentPage
+                            ? Color.white
+                            : Color.white.opacity(0.4)
+                    )
+            }
+        }
+        .padding(.bottom, 8)
+    }
+
+    private var readyButton: some View {
+        Button {
+            hasSeenOnboarding = true
+        } label: {
+            Text("Yes!")
+                .font(Constants.Fonts.bodySemibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Constants.Colors.orangeLight,
+                                    Constants.Colors.orangePrimary
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 24)
+    }
+
 }
 
-struct OnboardingView_Previews: PreviewProvider {
-    static var previews: some View {
-        OnboardingView()
-    }
+#Preview {
+    OnboardingView()
 }
