@@ -7,94 +7,58 @@
 
 import SwiftUI
 
+/// The card-swiping step of a party: each member likes or passes on every
+/// candidate, then moves on to pick a single favorite.
 struct SwipePartyView: View {
+
+    // MARK: - Properties
+
     @ObservedObject var viewModel: PartySetupView.ViewModel
-    let onComplete: (() -> Void)?
-    
+
     @State private var i = 0
     @State private var off: CGSize = .zero
     @State private var op: Double = 1.0
     @State private var showRes = false
     @State private var navWait = false
     @Environment(\.dismiss) private var dismiss
-    
+
+    let onComplete: (() -> Void)?
+
     init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }
 
+    // MARK: - Constants
+
     private let swipeThreshold: CGFloat = 80
+    private let swipeOutDistance: CGFloat = 600
+    private let swipeAdvanceDelay: Double = 0.3
+    private let resultsNavigationDelay: Double = 0.3
+    private let imageCornerRadius: CGFloat = 18
+
+    // MARK: - UI
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Swipe swipe swipe!")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(Constants.Fonts.title)
 
             Spacer().frame(height: 8)
 
-            if i < viewModel.candidates.count {
-                let cand = viewModel.candidates[i]
-
-                ZStack {
-                    swipeCard(for: cand)
-                }
-                .frame(height: 260)
-            } else {
-                VStack {
-                    Spacer()
-                    Text("Loading your favorites…")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .task {
-                    if !showRes && !navWait {
-                        viewModel.loadLikedOptions { success in
-                            if success && !viewModel.likedOptions.isEmpty {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    showRes = true
-                                }
-                            } else if success && viewModel.likedOptions.isEmpty {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    navWait = true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            cardSection
 
             Spacer()
 
             if i < viewModel.candidates.count {
-                HStack {
-                    Spacer()
-
-                    RoundBtn(
-                        systemName: "xmark",
-                        background: Color(red: 1.0, green: 0.7, blue: 0.6)
-                    ) {
-                        handleSwipe(liked: false)
-                    }
-
-                    Spacer()
-
-                    RoundBtn(
-                        systemName: "checkmark",
-                        background: Color(red: 0.99, green: 0.77, blue: 0.45)
-                    ) {
-                        handleSwipe(liked: true)
-                    }
-
-                    Spacer()
-                }
+                actionButtons
             }
 
             Spacer()
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Color(.systemGray6).ignoresSafeArea())
+        .background(Constants.Colors.background.ignoresSafeArea())
         .navigationTitle("Party")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showRes) {
@@ -111,80 +75,77 @@ struct SwipePartyView: View {
         }
     }
 
-    private func swipeCard(for cand: PartyCandidate) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Group {
-                if let imageUrl = cand.imageUrl, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure(_), .empty:
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 1.0, green: 0.75, blue: 0.4),
-                                            Color(red: 1.0, green: 0.55, blue: 0.35)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        @unknown default:
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 1.0, green: 0.75, blue: 0.4),
-                                            Color(red: 1.0, green: 0.55, blue: 0.35)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+    @ViewBuilder
+    private var cardSection: some View {
+        if i < viewModel.candidates.count {
+            ZStack {
+                swipeCard(for: viewModel.candidates[i])
+            }
+            .frame(height: 260)
+        } else {
+            loadingState
+        }
+    }
+
+    private var loadingState: some View {
+        VStack {
+            Spacer()
+            Text("Loading your favorites…")
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .task {
+            if !showRes && !navWait {
+                viewModel.loadLikedOptions { success in
+                    if success && !viewModel.likedOptions.isEmpty {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + resultsNavigationDelay) {
+                            showRes = true
+                        }
+                    } else if success && viewModel.likedOptions.isEmpty {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + resultsNavigationDelay) {
+                            navWait = true
                         }
                     }
-                } else {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.0, green: 0.75, blue: 0.4),
-                                    Color(red: 1.0, green: 0.55, blue: 0.35)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
                 }
             }
-            .frame(height: 160)
-            .clipped()
-            .cornerRadius(18)
+        }
+    }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(cand.name)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+    private var actionButtons: some View {
+        HStack {
+            Spacer()
 
-                HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 13))
-                    Text(cand.address)
-                }
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-
-                HStack(spacing: 6) {
-                    ForEach(cand.tags.prefix(3), id: \.self) { tag in
-                        Tag(text: tag)
-                    }
-                }
+            RoundBtn(
+                systemName: "xmark",
+                background: Constants.Colors.peach
+            ) {
+                handleSwipe(liked: false)
             }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 14)
+
+            Spacer()
+
+            RoundBtn(
+                systemName: "checkmark",
+                background: Constants.Colors.amber
+            ) {
+                handleSwipe(liked: true)
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Supporting
+
+    private func swipeCard(for cand: PartyCandidate) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardImage(for: cand)
+                .frame(height: 160)
+                .clipped()
+                .cornerRadius(imageCornerRadius)
+
+            cardDetails(for: cand)
         }
         .background(Color.white)
         .cornerRadius(22)
@@ -198,19 +159,83 @@ struct SwipePartyView: View {
                     off = value.translation
                 }
                 .onEnded { value in
-                    let dx = value.translation.width
-                    if dx > swipeThreshold {
-                        handleSwipe(liked: true)
-                    } else if dx < -swipeThreshold {
-                        handleSwipe(liked: false)
-                    } else {
-                        withAnimation(.spring()) {
-                            off = .zero
-                        }
-                    }
+                    handleSwipeEnd(translation: value.translation)
                 }
         )
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: off)
+    }
+
+    private func cardImage(for cand: PartyCandidate) -> some View {
+        Group {
+            if let imageUrl = cand.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure(_), .empty:
+                        imagePlaceholder
+                    @unknown default:
+                        imagePlaceholder
+                    }
+                }
+            } else {
+                imagePlaceholder
+            }
+        }
+    }
+
+    private var imagePlaceholder: some View {
+        RoundedRectangle(cornerRadius: imageCornerRadius)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Constants.Colors.orangeLight,
+                        Constants.Colors.orangePrimary
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+
+    private func cardDetails(for cand: PartyCandidate) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(cand.name)
+                .font(Constants.Fonts.subheading)
+
+            HStack(spacing: 4) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(Constants.Fonts.caption)
+                Text(cand.address)
+            }
+            .font(Constants.Fonts.caption)
+            .foregroundColor(.secondary)
+
+            HStack(spacing: 6) {
+                ForEach(cand.tags.prefix(3), id: \.self) { tag in
+                    Tag(text: tag)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 14)
+    }
+
+    // MARK: - Helpers
+
+    private func handleSwipeEnd(translation: CGSize) {
+        let dx = translation.width
+        if dx > swipeThreshold {
+            handleSwipe(liked: true)
+        } else if dx < -swipeThreshold {
+            handleSwipe(liked: false)
+        } else {
+            withAnimation(.spring()) {
+                off = .zero
+            }
+        }
     }
 
     private func handleSwipe(liked: Bool) {
@@ -222,14 +247,21 @@ struct SwipePartyView: View {
         viewModel.recordSwipe(for: current, liked: liked)
 
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            off = CGSize(width: direction * 600, height: 40)
+            off = CGSize(width: direction * swipeOutDistance, height: 40)
             op = 0
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + swipeAdvanceDelay) {
             off = .zero
             op = 1
             i += 1
         }
+    }
+
+}
+
+#Preview {
+    NavigationStack {
+        SwipePartyView(viewModel: PartySetupView.ViewModel())
     }
 }

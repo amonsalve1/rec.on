@@ -7,97 +7,39 @@
 
 import SwiftUI
 
+/// The tie-breaker step that spins a wheel over the pool of final picks and
+/// reveals the winning option.
 struct SpinWheelView: View {
+
+    // MARK: - Properties
+
     @ObservedObject var viewModel: PartySetupView.ViewModel
-    let onComplete: (() -> Void)?
-    
+
     @State private var spin = false
     @State private var w: [String: Any]?
     @State private var navRes = false
     @Environment(\.dismiss) private var dismiss
-    
+
+    let onComplete: (() -> Void)?
+
     init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.onComplete = onComplete
     }
-    
+
+    // MARK: - UI
+
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
-            
-            if spin {
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Spinning the wheel…")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                }
-            } else if let w = w {
-                VStack(spacing: 16) {
-                    Text("Winner selected!")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                    
-                    if let name = w["option_name"] as? String {
-                        Text(name)
-                            .font(.system(size: 20, weight: .semibold, design: .rounded))
-                            .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.35))
-                    }
-                    
-                    Button(action: {
-                        navRes = true
-                    }) {
-                        Text("See Results")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 1.0, green: 0.75, blue: 0.4),
-                                        Color(red: 1.0, green: 0.55, blue: 0.35)
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(22)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                }
-            } else {
-                Button(action: spinWheel) {
-                    Text("Spin the Wheel!")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.0, green: 0.75, blue: 0.4),
-                                    Color(red: 1.0, green: 0.55, blue: 0.35)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(22)
-                }
-                .padding(.horizontal, 24)
-                .onAppear {
-                    if !spin && w == nil {
-                        spinWheel()
-                    }
-                }
-            }
-            
+
+            content
+
             Spacer()
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Color(.systemGray6).ignoresSafeArea())
+        .background(Constants.Colors.background.ignoresSafeArea())
         .navigationTitle("Spin Wheel")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navRes) {
@@ -108,10 +50,90 @@ struct SpinWheelView: View {
             )
         }
     }
-    
+
+    @ViewBuilder
+    private var content: some View {
+        if spin {
+            spinningState
+        } else if let w = w {
+            winnerState(for: w)
+        } else {
+            spinButton
+        }
+    }
+
+    private var spinningState: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Spinning the wheel…")
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+        }
+    }
+
+    private var spinButton: some View {
+        Button(action: spinWheel) {
+            Text("Spin the Wheel!")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(buttonGradient)
+                .cornerRadius(22)
+        }
+        .padding(.horizontal, 24)
+        .onAppear {
+            if !spin && w == nil {
+                spinWheel()
+            }
+        }
+    }
+
+    // MARK: - Supporting
+
+    private func winnerState(for w: [String: Any]) -> some View {
+        VStack(spacing: 16) {
+            Text("Winner selected!")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+
+            if let name = w["option_name"] as? String {
+                Text(name)
+                    .font(Constants.Fonts.subheading)
+                    .foregroundColor(Constants.Colors.orangePrimary)
+            }
+
+            Button(action: {
+                navRes = true
+            }) {
+                Text("See Results")
+                    .font(Constants.Fonts.bodySemibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(buttonGradient)
+                    .cornerRadius(22)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+        }
+    }
+
+    private var buttonGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Constants.Colors.orangeLight,
+                Constants.Colors.orangePrimary
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    // MARK: - Helpers
+
     private func spinWheel() {
         spin = true
-        
+
         viewModel.spinWheel { result in
             spin = false
             switch result {
@@ -123,5 +145,11 @@ struct SpinWheelView: View {
             }
         }
     }
-    
+
+}
+
+#Preview {
+    NavigationStack {
+        SpinWheelView(viewModel: PartySetupView.ViewModel())
+    }
 }
