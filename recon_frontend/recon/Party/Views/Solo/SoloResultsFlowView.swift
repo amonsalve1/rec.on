@@ -6,23 +6,27 @@
 //
 
 import SwiftUI
-import Foundation
 
-/// The solo results flow: the liked picks, the randomizer, and the winner reveal.
+/// The solo results flow: the liked picks, the randomizer, and the winner
+/// reveal. The winner comes from the backend spin; the randomizer animation
+/// is forced to land on it.
 struct SoloResultsFlowView: View {
 
     // MARK: - Properties
 
+    @ObservedObject var viewModel: SoloFlowView.ViewModel
+
     @State private var s = 0
     @State private var w: PartyCandidate?
+    @State private var spinning = false
+    @State private var spinErr = false
 
     @Environment(\.dismiss) private var dismiss
 
-    let candidates: [PartyCandidate]
     let onComplete: (() -> Void)?
 
-    init(candidates: [PartyCandidate], onComplete: (() -> Void)? = nil) {
-        self.candidates = candidates
+    init(viewModel: SoloFlowView.ViewModel, onComplete: (() -> Void)? = nil) {
+        self.viewModel = viewModel
         self.onComplete = onComplete
     }
 
@@ -32,7 +36,7 @@ struct SoloResultsFlowView: View {
         ZStack {
             Constants.Colors.background.ignoresSafeArea()
 
-            if candidates.isEmpty {
+            if viewModel.liked.isEmpty {
                 emptyState
             } else {
                 stepContent
@@ -40,6 +44,11 @@ struct SoloResultsFlowView: View {
         }
         .navigationTitle(s == 0 ? "Picks" : "Solo")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $spinErr) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.errorMessage ?? "Something went wrong.")
+        }
     }
 
     private var emptyState: some View {
@@ -62,17 +71,21 @@ struct SoloResultsFlowView: View {
     private var stepContent: some View {
         switch s {
         case 0:
-            PicksListPage(
-                candidates: candidates,
-                onConfirm: {
-                    s = 1
-                }
-            )
+            if spinning {
+                spinningState
+            } else {
+                PicksListPage(
+                    candidates: viewModel.liked,
+                    onConfirm: {
+                        spinForWinner()
+                    }
+                )
+            }
 
         case 1:
             RandomizingPage(
-                candidates: candidates,
-                forced: nil,
+                candidates: viewModel.liked,
+                forced: w,
                 onFinished: { selected in
                     w = selected
                     s = 2
@@ -91,25 +104,39 @@ struct SoloResultsFlowView: View {
         }
     }
 
+    private var spinningState: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+
+            Text("Picking a winner…")
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Asks the backend for the winner, then runs the randomizer animation
+    /// forced to land on it.
+    private func spinForWinner() {
+        spinning = true
+
+        viewModel.spin { winner in
+            spinning = false
+            if let winner {
+                w = winner
+                s = 1
+            } else {
+                spinErr = true
+            }
+        }
+    }
+
 }
 
 #Preview {
     NavigationStack {
-        SoloResultsFlowView(
-            candidates: [
-                PartyCandidate(
-                    name: "Joe's Pizza",
-                    address: "7 Carmine St",
-                    tags: ["Pizza", "Casual"],
-                    imageName: "food1"
-                ),
-                PartyCandidate(
-                    name: "Thai Villa",
-                    address: "5 E 19th St",
-                    tags: ["Thai", "Cozy"],
-                    imageName: "food1"
-                )
-            ]
-        )
+        SoloResultsFlowView(viewModel: SoloFlowView.ViewModel())
     }
 }

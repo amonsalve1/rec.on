@@ -91,8 +91,16 @@ struct RandomizingPage: View {
     private func pickWinnerIndex() {
         guard !candidates.isEmpty else { return }
 
+        // match on the backend id (or name as a fallback): PartyCandidate's
+        // local UUID identity differs between the forced instance and the
+        // carousel's, so plain equality can never land the forced winner
         if let forced = forced,
-           let found = candidates.firstIndex(of: forced) {
+           let found = candidates.firstIndex(where: { candidate in
+               if let backendId = forced.backendId {
+                   return candidate.backendId == backendId
+               }
+               return candidate.name == forced.name
+           }) {
             wIdx = found
         } else {
             wIdx = Int.random(in: 0..<candidates.count)

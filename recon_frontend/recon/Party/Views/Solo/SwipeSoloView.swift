@@ -56,7 +56,7 @@ struct SwipeSoloView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showRes) {
             SoloResultsFlowView(
-                candidates: viewModel.liked,
+                viewModel: viewModel,
                 onComplete: {
                     showRes = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
