@@ -112,3 +112,26 @@ def stub_overpass(monkeypatch):
         monkeypatch.setattr("app.places.overpass.OverpassProvider.fetch", fetch)
 
     return _stub
+
+
+@pytest.fixture(autouse=True)
+def never_hit_wikidata(monkeypatch):
+    """No test may call wikidata for real; images just stay null."""
+
+    def fetch(self, ids):
+        raise ProviderUnavailable("network disabled in tests")
+
+    monkeypatch.setattr("app.places.wikimedia.WikidataImages.fetch", fetch)
+
+
+@pytest.fixture
+def stub_wikidata(monkeypatch):
+    def _stub(payload=None, fail=False):
+        def fetch(self, ids):
+            if fail:
+                raise ProviderUnavailable("stubbed failure")
+            return payload
+
+        monkeypatch.setattr("app.places.wikimedia.WikidataImages.fetch", fetch)
+
+    return _stub
