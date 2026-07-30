@@ -9,6 +9,11 @@ import Foundation
 
 extension Notification.Name {
     static let tokenExpired = Notification.Name("tokenExpired")
+
+    /// Posted when a solo or party session finishes. The flow roots listen
+    /// and unwind themselves, so the exit does not depend on a chain of
+    /// nested completion closures reaching all the way back up.
+    static let sessionFinished = Notification.Name("sessionFinished")
 }
 
 struct APIConfig {

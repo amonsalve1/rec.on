@@ -57,12 +57,7 @@ struct SwipeSoloView: View {
         .navigationDestination(isPresented: $showRes) {
             SoloResultsFlowView(
                 viewModel: viewModel,
-                onComplete: {
-                    showRes = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        onComplete?()
-                    }
-                }
+                onComplete: onComplete
             )
         }
     }
@@ -77,26 +72,62 @@ struct SwipeSoloView: View {
             }
             .frame(height: 260)
         } else {
-            loadingState
+            deckDoneState
         }
     }
 
-    private var loadingState: some View {
-        VStack {
+    /// Shown once every card has been swiped. Deliberately button-driven, so
+    /// navigating back from the results always lands somewhere that works.
+    private var deckDoneState: some View {
+        VStack(spacing: 16) {
             Spacer()
 
-            Text("Loading your favorites…")
-                .font(.system(size: 18, weight: .medium, design: .rounded))
+            FannedCards()
+
+            Text("That's the deck!")
+                .font(Constants.Fonts.title)
+
+            Text(likedSummary)
+                .font(Constants.Fonts.bodyRegularRounded)
                 .foregroundColor(.secondary)
+
+            Button {
+                showRes = true
+            } label: {
+                Text("See your favorites")
+                    .font(Constants.Fonts.bodySemibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Constants.Colors.orangeLight,
+                                        Constants.Colors.orangePrimary
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+            }
+            .padding(.top, 8)
 
             Spacer()
         }
-        .task {
-            if !showRes {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showRes = true
-                }
-            }
+    }
+
+    private var likedSummary: String {
+        let count = viewModel.liked.count
+        switch count {
+        case 0:
+            return "Nothing caught your eye"
+        case 1:
+            return "You liked 1 option"
+        default:
+            return "You liked \(count) options"
         }
     }
 

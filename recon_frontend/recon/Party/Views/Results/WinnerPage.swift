@@ -58,13 +58,8 @@ struct WinnerPage: View {
     private var doneButton: some View {
         Button {
             saveRecentPick(winner)
-            DispatchQueue.main.async {
-                if let onComplete = onComplete {
-                    onComplete()
-                } else {
-                    popToRoot()
-                }
-            }
+            onComplete?()
+            NotificationCenter.default.post(name: .sessionFinished, object: nil)
         } label: {
             Text("Done")
                 .font(Constants.Fonts.bodySemibold)
@@ -120,24 +115,6 @@ struct WinnerPage: View {
             UserDefaults.standard.set(encoded, forKey: "recentPicks")
             NotificationCenter.default.post(name: NSNotification.Name("RecentPicksUpdated"), object: nil)
         }
-    }
-
-    /// Walks back to the navigation root by dismissing one screen at a time.
-    private func popToRoot() {
-        var cnt = 0
-        let max = 10
-
-        func dismissNext() {
-            if cnt < max {
-                dismiss()
-                cnt += 1
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    dismissNext()
-                }
-            }
-        }
-
-        dismissNext()
     }
 
 }

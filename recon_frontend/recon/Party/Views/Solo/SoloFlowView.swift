@@ -37,15 +37,12 @@ struct SoloFlowView: View {
             Text(viewModel.errorMessage ?? "Something went wrong.")
         }
         .navigationDestination(isPresented: $navSwipe) {
-            SwipeSoloView(
-                viewModel: viewModel,
-                onComplete: {
-                    navSwipe = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        dismiss()
-                    }
-                }
-            )
+            SwipeSoloView(viewModel: viewModel)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionFinished)) { _ in
+            // collapse the pushed stack, then leave the flow entirely
+            navSwipe = false
+            dismiss()
         }
         .navigationTitle("Solo")
         .navigationBarTitleDisplayMode(.inline)

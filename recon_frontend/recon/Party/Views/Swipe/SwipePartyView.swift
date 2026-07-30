@@ -20,6 +20,7 @@ struct SwipePartyView: View {
     @State private var op: Double = 1.0
     @State private var showRes = false
     @State private var navWait = false
+    @State private var loadingLiked = false
     @Environment(\.dismiss) private var dismiss
 
     let onComplete: (() -> Void)?
@@ -34,7 +35,6 @@ struct SwipePartyView: View {
     private let swipeThreshold: CGFloat = 80
     private let swipeOutDistance: CGFloat = 600
     private let swipeAdvanceDelay: Double = 0.3
-    private let resultsNavigationDelay: Double = 0.3
     private let imageCornerRadius: CGFloat = 18
 
     // MARK: - UI
@@ -83,30 +83,79 @@ struct SwipePartyView: View {
             }
             .frame(height: 260)
         } else {
-            loadingState
+            deckDoneState
         }
     }
 
-    private var loadingState: some View {
-        VStack {
+    /// Shown once every card has been swiped. Button-driven rather than a
+    /// timed auto-advance: coming back from the pick screen lands here in a
+    /// working state, and a failed liked-options fetch gets a retry for free.
+    private var deckDoneState: some View {
+        VStack(spacing: 16) {
             Spacer()
-            Text("Loading your favorites…")
-                .font(.system(size: 18, weight: .medium, design: .rounded))
+
+            FannedCards()
+
+            Text("That's the deck!")
+                .font(Constants.Fonts.title)
+
+            Text("Time to pick your one favorite")
+                .font(Constants.Fonts.bodyRegularRounded)
                 .foregroundColor(.secondary)
+
+            Button {
+                continueToPick()
+            } label: {
+                Group {
+                    if loadingLiked {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Continue")
+                            .font(Constants.Fonts.bodySemibold)
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Constants.Colors.orangeLight,
+                                    Constants.Colors.orangePrimary
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+            }
+            .disabled(loadingLiked)
+            .padding(.top, 8)
+
             Spacer()
         }
-        .task {
-            if !showRes && !navWait {
-                viewModel.loadLikedOptions { success in
-                    if success && !viewModel.likedOptions.isEmpty {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + resultsNavigationDelay) {
-                            showRes = true
-                        }
-                    } else if success && viewModel.likedOptions.isEmpty {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + resultsNavigationDelay) {
-                            navWait = true
-                        }
-                    }
+    }
+
+    // MARK: - Helpers
+
+    /// Fetches the liked options, then routes to the pick screen — or
+    /// straight to the waiting room when nothing was liked.
+    private func continueToPick() {
+        guard !loadingLiked else { return }
+        loadingLiked = true
+
+        viewModel.loadLikedOptions { success in
+            DispatchQueue.main.async {
+                loadingLiked = false
+                guard success else { return }
+
+                if viewModel.likedOptions.isEmpty {
+                    navWait = true
+                } else {
+                    showRes = true
                 }
             }
         }

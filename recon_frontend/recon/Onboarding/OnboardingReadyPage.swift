@@ -16,17 +16,13 @@ struct OnboardingReadyPage: View {
     /// Called when the user is done with onboarding.
     let onFinish: () -> Void
 
-    // MARK: - Constants
-
-    private let cardSize = CGSize(width: 72, height: 96)
-
     // MARK: - UI
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            fannedCards
+            FannedCards()
 
             title
 
@@ -36,18 +32,6 @@ struct OnboardingReadyPage: View {
         }
         .padding(.horizontal, 32)
         .padding(.bottom, 8)
-    }
-
-    private var fannedCards: some View {
-        HStack(spacing: -14) {
-            miniCard(fill: Constants.Colors.orangeLight, tilt: -10)
-
-            miniCard(fill: Constants.Colors.orangePrimary, tilt: 0)
-                .offset(y: -10)
-                .zIndex(1)
-
-            miniCard(fill: Constants.Colors.peach, tilt: 10)
-        }
     }
 
     private var title: some View {
@@ -87,16 +71,6 @@ struct OnboardingReadyPage: View {
                         )
                 )
         }
-    }
-
-    // MARK: - Supporting
-
-    private func miniCard(fill: Color, tilt: Double) -> some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(fill)
-            .frame(width: cardSize.width, height: cardSize.height)
-            .rotationEffect(.degrees(tilt))
-            .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 
 }

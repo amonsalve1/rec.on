@@ -51,13 +51,12 @@ struct PartySetupView: View {
             Text(viewModel.errorMessage ?? "Something went wrong.")
         }
         .navigationDestination(isPresented: $navSwipe) {
-            SwipePartyView(
-                viewModel: viewModel,
-                onComplete: {
-                    dismiss()
-                    onComplete?()
-                }
-            )
+            SwipePartyView(viewModel: viewModel)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionFinished)) { _ in
+            navSwipe = false
+            onComplete?()
+            dismiss()
         }
     }
 
