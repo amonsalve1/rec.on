@@ -69,12 +69,7 @@ extension ProfileView {
         /// Loads an image from the documents directory, or `nil` if the file
         /// is missing or unreadable.
         func loadImage(from path: String) -> UIImage? {
-            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let url = docs.appendingPathComponent(path)
-
-            guard let data = try? Data(contentsOf: url) else { return nil }
-
-            return UIImage(data: data)
+            ProfileImageStore.load(from: path)
         }
 
     }

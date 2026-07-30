@@ -73,19 +73,7 @@ struct HomeHeaderView: View {
     /// Loads the saved avatar from the documents directory, or `nil` if none
     /// has been saved yet.
     private func loadProfileImage() -> UIImage? {
-        guard !profilePicturePath.isEmpty else { return nil }
-
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent(profilePicturePath)
-
-        guard
-            let data = try? Data(contentsOf: url),
-            let image = UIImage(data: data)
-        else {
-            return nil
-        }
-
-        return image
+        ProfileImageStore.load(from: profilePicturePath)
     }
 
 }

@@ -124,14 +124,7 @@ struct SideMenuView: View {
     /// Loads the saved avatar from the documents directory, or `nil` if none
     /// has been saved yet.
     private func loadProfileImage() -> UIImage? {
-        guard !profilePicturePath.isEmpty else { return nil }
-
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let imageURL = documentsPath.appendingPathComponent(profilePicturePath)
-
-        guard let imageData = try? Data(contentsOf: imageURL) else { return nil }
-
-        return UIImage(data: imageData)
+        ProfileImageStore.load(from: profilePicturePath)
     }
 
 }
