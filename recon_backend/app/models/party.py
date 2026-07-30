@@ -74,6 +74,17 @@ class Party(db.Model):
     radius_m: Mapped[Optional[int]] = mapped_column(Integer)
     provider: Mapped[Optional[str]] = mapped_column(String(20))
 
+    # set when the spin lands; the party is complete from then on
+    winner_option_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger,
+        ForeignKey(
+            "options.id",
+            name="fk_parties_winner_option",
+            use_alter=True,
+            ondelete="SET NULL",
+        ),
+    )
+
     # bumped by every change a member could observe. drives the ETag.
     version: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default=text("1"))
 
@@ -89,6 +100,7 @@ class Party(db.Model):
     members: Mapped[list["PartyMember"]] = relationship(
         back_populates="party", cascade="all, delete-orphan"
     )
+    winner_option = relationship("Option", foreign_keys=[winner_option_id], post_update=True)
 
     __table_args__ = (
         CheckConstraint(f"topic IN {TOPICS}", name="ck_parties_topic"),

@@ -1,11 +1,13 @@
 from .invite import Invite
 from .option import Option, ProviderCache
 from .party import Party, PartyMember
+from .pick import FinalPick
 from .swipe import Swipe
 from .token import RefreshToken
 from .user import Profile, User
 
 __all__ = [
+    "FinalPick",
     "Invite",
     "Option",
     "Party",

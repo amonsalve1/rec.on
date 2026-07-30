@@ -56,7 +56,9 @@ class Option(db.Model):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    party = relationship("Party")
+    # explicit: parties.winner_option_id adds a second FK path between these
+    # tables, and this relationship means "the party this option belongs to"
+    party = relationship("Party", foreign_keys=[party_id])
 
     __table_args__ = (
         UniqueConstraint("party_id", "position", name="uq_options_party_position"),
