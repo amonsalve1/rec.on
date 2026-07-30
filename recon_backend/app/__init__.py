@@ -29,6 +29,10 @@ def create_app(config=None):
 
     register_error_handlers(app)
 
+    from .cli import register_cli
+
+    register_cli(app)
+
     @app.get("/v1/health")
     @limiter.exempt
     def health():
