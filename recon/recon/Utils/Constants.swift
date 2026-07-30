@@ -64,6 +64,9 @@ enum Constants {
         /// Section titles on the home screen.
         static let sectionTitle = Font.system(size: 22, weight: .semibold, design: .rounded)
 
+        /// Section titles outside the home screen, without the rounded face.
+        static let sectionTitlePlain = Font.system(size: 22, weight: .semibold)
+
         /// Card titles and emphasized rows.
         static let subheading = Font.system(size: 20, weight: .semibold, design: .rounded)
 
@@ -102,6 +105,12 @@ enum Constants {
 
         /// Captions and metadata.
         static let caption = Font.system(size: 13)
+
+        /// Dynamic subheadline for secondary rows.
+        static let subheadline = Font.subheadline
+
+        /// Emphasized dynamic subheadline for pill buttons.
+        static let subheadlineSemibold = Font.subheadline.weight(.semibold)
 
     }
 

@@ -6,238 +6,243 @@
 //
 
 import SwiftUI
-import Foundation
 import UIKit
 
+/// The profile page: ink banner, avatar card with name and location, and the
+/// list of recent picks.
 struct ProfileView: View {
+
+    // MARK: - Properties
+
     @Environment(\.dismiss) private var dismiss
-    let userId: Int?
-    
+    @StateObject private var viewModel: ViewModel
+
     @AppStorage("userName") var storedName: String = ""
     @AppStorage("userLocation") var storedLocation: String = ""
     @AppStorage("userProfilePicturePath") var profilePicturePath: String = ""
-    
-    @State private var profile: LocalProfile?
-    @State private var recentPicks: [FinalPick] = []
-    @State private var isLoading = false
-    @State private var isLoadingProfile = false
-    @State private var errorMessage: String?
-    @State private var showEditSheet = false
-    
-    var isOwnProfile: Bool {
-        userId == nil
+
+    // MARK: - Constants
+
+    private let bannerHeight: CGFloat = 200
+    private let avatarSize: CGFloat = 96
+
+    // MARK: - Init
+
+    init(userId: Int?) {
+        _viewModel = StateObject(wrappedValue: ViewModel(userId: userId))
     }
-    
+
+    // MARK: - UI
+
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                Color(red: 0.14, green: 0.14, blue: 0.14)
-                    .frame(height: 200)
-                    .ignoresSafeArea(edges: .top)
-                
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(width: 44, height: 44)
-                        .background(Color.orange)
-                        .clipShape(Circle())
-                }
-                .padding(.leading, 24)
-                .padding(.top, 16)
-    
-                VStack(spacing: 0) {
-                    Spacer().frame(height: 120)
-                    
-                    ZStack(alignment: .topLeading) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(alignment: .center) {
-                                Text(profile?.name ?? (storedName.isEmpty ? "User" : storedName))
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.black)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    guard isOwnProfile else { return }
-                                    showEditSheet = true
-                                }) {
-                                    Text(isOwnProfile ? "Edit" : "Message")
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundColor(.black)
-                                        .padding(.horizontal, 18)
-                                        .padding(.vertical, 8)
-                                        .background(Color.orange)
-                                        .cornerRadius(18)
-                                        .shadow(color: .black.opacity(0.25),
-                                                radius: 4, x: 0, y: 2)
-                                }
-                            }
-                            
-                            HStack {
-                                Text("\(profile?.friendsCount ?? 0) friends")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                
-                                Spacer()
-                                
-                                let displayLocation = profile?.location ?? storedLocation
-                                if !displayLocation.isEmpty {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "mappin.and.ellipse")
-                                            .font(.subheadline)
-                                            .foregroundColor(.orange)
-                                        
-                                        Text(displayLocation)
-                                            .font(.subheadline)
-                                            .foregroundColor(.black)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 48)
-                        .padding(.bottom, 16)
-                        .background(Color(.systemBackground))
-                        
-                        Group {
-                            if let imagePath = profile?.profilePictureUrl,
-                               !imagePath.isEmpty,
-                               let image = loadImage(from: imagePath) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                            } else if !profilePicturePath.isEmpty,
-                                      let image = loadImage(from: profilePicturePath) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .scaledToFill()
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        .frame(width: 96, height: 96)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle().stroke(Color.white, lineWidth: 4)
-                        )
-                        .offset(x: 24, y: -48)
-                    }
-                }
-            }
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Recent picks")
-                        .font(.system(size: 22, weight: .semibold))
-                    
-                    if isLoading && recentPicks.isEmpty {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    } else if recentPicks.isEmpty {
-                        Text("No recent picks yet")
-                            .foregroundColor(.gray)
-                            .font(.subheadline)
-                            .padding(.top, 8)
-                    } else {
-                        VStack(spacing: 16) {
-                            ForEach(recentPicks) { pick in
-                                RecentPickCard(pick: pick)
-                            }
-                        }
-                        .padding(.bottom, 24)
-                    }
-                }
-                .padding(.top, 16)
-                .padding(.horizontal, 24)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            header
+
+            picksList
         }
         .background(Color(.systemBackground))
-        .sheet(isPresented: $showEditSheet) {
-            EditProfileView(
-                currentName: storedName,
-                currentLocation: storedLocation,
-                currentProfilePicturePath: profilePicturePath,
-                onSave: { name, location, picturePath in
-                    storedName = name
-                    if !location.isEmpty {
-                        storedLocation = location
-                    } else {
-                        storedLocation = ""
-                    }
-                    profilePicturePath = picturePath
-                    Task {
-                        await loadProfile()
-                    }
-                }
-            )
+        .sheet(isPresented: $viewModel.showEditSheet) {
+            editProfileSheet
         }
         .task {
-            await loadProfile()
-            await loadRecentPicks()
-        }
-    }
-}
-
-extension ProfileView {
-    func loadProfile() async {
-        guard !isLoadingProfile else { return }
-        isLoadingProfile = true
-        
-        await MainActor.run {
-            let picUrl = profilePicturePath.isEmpty ? nil : profilePicturePath
-            self.profile = LocalProfile(
+            viewModel.loadProfile(
                 name: storedName,
                 location: storedLocation,
-                friendsCount: 0,
-                profilePictureUrl: picUrl
+                picturePath: profilePicturePath
             )
-            self.isLoadingProfile = false
+            viewModel.loadRecentPicks()
         }
     }
-    
-    @MainActor
-    func loadImage(from path: String) -> UIImage? {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent(path)
-        
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        return UIImage(data: data)
-    }
-    
-    func loadRecentPicks() async {
-        guard !isLoading else { return }
-        isLoading = true
-        errorMessage = nil
-        
-        await MainActor.run {
-            if let data = UserDefaults.standard.data(forKey: "recentPicks") {
-                if let decoded = try? JSONDecoder().decode([RecentPickData].self, from: data) {
-                    self.recentPicks = decoded.map { data in
-                        FinalPick(
-                            id: data.id,
-                            name: data.name,
-                            imageUrl: data.imageUrl,
-                            address: data.address,
-                            tags: data.tags,
-                            timeAgo: data.timeAgo
-                        )
-                    }
-                } else {
-                    self.recentPicks = []
-                }
-            } else {
-                self.recentPicks = []
+
+    private var header: some View {
+        ZStack(alignment: .topLeading) {
+            Constants.Colors.ink
+                .frame(height: bannerHeight)
+                .ignoresSafeArea(edges: .top)
+
+            backButton
+
+            VStack(spacing: 0) {
+                Spacer().frame(height: 120)
+
+                profileCard
             }
-            self.isLoading = false
         }
     }
+
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(Constants.Fonts.buttonLabel)
+                .foregroundColor(.black)
+                .frame(width: 44, height: 44)
+                .background(Constants.Colors.accent)
+                .clipShape(Circle())
+        }
+        .padding(.leading, 24)
+        .padding(.top, Constants.Padding.screenHorizontal)
+    }
+
+    private var profileCard: some View {
+        ZStack(alignment: .topLeading) {
+            VStack(alignment: .leading, spacing: 12) {
+                nameRow
+
+                statsRow
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 48)
+            .padding(.bottom, Constants.Padding.screenHorizontal)
+            .background(Color(.systemBackground))
+
+            avatar
+                .frame(width: avatarSize, height: avatarSize)
+                .clipShape(Circle())
+                .overlay(
+                    Circle().stroke(Color.white, lineWidth: 4)
+                )
+                .offset(x: 24, y: -48)
+        }
+    }
+
+    private var nameRow: some View {
+        HStack(alignment: .center) {
+            Text(displayName)
+                .font(Constants.Fonts.heading)
+                .foregroundColor(.black)
+
+            Spacer()
+
+            Button {
+                guard viewModel.isOwnProfile else { return }
+                viewModel.showEditSheet = true
+            } label: {
+                Text(viewModel.isOwnProfile ? "Edit" : "Message")
+                    .font(Constants.Fonts.subheadlineSemibold)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 8)
+                    .background(Constants.Colors.accent)
+                    .cornerRadius(18)
+                    .shadow(
+                        color: .black.opacity(0.25),
+                        radius: 4,
+                        x: 0,
+                        y: 2
+                    )
+            }
+        }
+    }
+
+    private var statsRow: some View {
+        HStack {
+            Text("\(viewModel.profile?.friendsCount ?? 0) friends")
+                .font(Constants.Fonts.subheadline)
+                .foregroundColor(.gray)
+
+            Spacer()
+
+            if !displayLocation.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(Constants.Fonts.subheadline)
+                        .foregroundColor(Constants.Colors.accent)
+
+                    Text(displayLocation)
+                        .font(Constants.Fonts.subheadline)
+                        .foregroundColor(.black)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let imagePath = viewModel.profile?.profilePictureUrl,
+           !imagePath.isEmpty,
+           let image = viewModel.loadImage(from: imagePath) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else if !profilePicturePath.isEmpty,
+                  let image = viewModel.loadImage(from: profilePicturePath) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .scaledToFill()
+                .foregroundColor(.gray)
+        }
+    }
+
+    private var picksList: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Recent picks")
+                    .font(Constants.Fonts.sectionTitlePlain)
+
+                picksContent
+            }
+            .padding(.top, Constants.Padding.screenHorizontal)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private var picksContent: some View {
+        if viewModel.isLoading && viewModel.recentPicks.isEmpty {
+            ProgressView()
+                .frame(maxWidth: .infinity, alignment: .center)
+        } else if viewModel.recentPicks.isEmpty {
+            Text("No recent picks yet")
+                .foregroundColor(.gray)
+                .font(Constants.Fonts.subheadline)
+                .padding(.top, 8)
+        } else {
+            VStack(spacing: 16) {
+                ForEach(viewModel.recentPicks) { pick in
+                    RecentPickCard(pick: pick)
+                }
+            }
+            .padding(.bottom, 24)
+        }
+    }
+
+    private var editProfileSheet: some View {
+        EditProfileView(
+            currentName: storedName,
+            currentLocation: storedLocation,
+            currentProfilePicturePath: profilePicturePath,
+            onSave: { name, location, picturePath in
+                storedName = name
+                storedLocation = location
+                profilePicturePath = picturePath
+                viewModel.loadProfile(
+                    name: name,
+                    location: location,
+                    picturePath: picturePath
+                )
+            }
+        )
+    }
+
+    // MARK: - Helpers
+
+    private var displayName: String {
+        viewModel.profile?.name ?? (storedName.isEmpty ? "User" : storedName)
+    }
+
+    private var displayLocation: String {
+        viewModel.profile?.location ?? storedLocation
+    }
+
+}
+
+#Preview {
+    ProfileView(userId: nil)
 }
