@@ -9,40 +9,38 @@ import Foundation
 @preconcurrency import Alamofire
 
 extension RecOnAPI {
-    func recordSwipe(sessionId: Int, optionId: Int, optionName: String, liked: Bool, completion: (@Sendable (Result<Void, Error>) -> Void)?) {
-        let url = APIConfig.baseURL.appendingPathComponent("swipes/")
-        let body = RecordSwipeRequest(session_id: sessionId, option_id: optionId, option_name: optionName, direction: liked ? "like" : "dislike")
+    func recordSwipe(sessionId: String, optionId: Int, liked: Bool, completion: (@Sendable (Result<Void, Error>) -> Void)?) {
+        let url = endpoint("parties/\(sessionId)/swipes")
+        let body = RecordSwipeRequest(option_id: optionId, liked: liked)
         session.request(url, method: .post, parameters: body, encoder: JSONParameterEncoder.default, headers: headers)
         .responseData { response in
             let statusCode = response.response?.statusCode ?? -1
-            
+
             if (200..<300).contains(statusCode) {
                 completion?(.success(()))
             } else {
                 self.handleTokenRefresh(statusCode: statusCode, errorData: response.data, retry: {
-                    self.recordSwipe(sessionId: sessionId, optionId: optionId, optionName: optionName, liked: liked, completion: completion)
+                    self.recordSwipe(sessionId: sessionId, optionId: optionId, liked: liked, completion: completion)
                 }, completion: { result in
                     completion?(result)
                 })
             }
         }
     }
-    
-    func getLikedOptions(sessionId: Int, completion: @escaping @Sendable (Result<[BackendOption], Error>) -> Void) {
-        let url = APIConfig.baseURL.appendingPathComponent("\(sessionId)/liked/")
+
+    /// The caller's own swipes, for rebuilding the liked list.
+    func getMySwipes(sessionId: String, completion: @escaping @Sendable (Result<[SwipeDTO], Error>) -> Void) {
+        let url = endpoint("parties/\(sessionId)/swipes/me")
         session.request(url, headers: headers)
         .responseData { response in
             let statusCode = response.response?.statusCode ?? -1
-            
-            if (200..<300).contains(statusCode), let data = response.data {
-                if let envelope = try? JSONDecoder().decode([String: [BackendOption]].self, from: data) {
-                    completion(.success(envelope["liked_options"] ?? []))
-                } else {
-                    completion(.failure(RecOnAPIError.noData))
-                }
+
+            if (200..<300).contains(statusCode), let data = response.data,
+               let envelope = try? JSONDecoder().decode([String: [SwipeDTO]].self, from: data) {
+                completion(.success(envelope["swipes"] ?? []))
             } else {
                 self.handleTokenRefresh(statusCode: statusCode, errorData: response.data, retry: {
-                    self.getLikedOptions(sessionId: sessionId, completion: completion)
+                    self.getMySwipes(sessionId: sessionId, completion: completion)
                 }, completion: completion)
             }
         }
