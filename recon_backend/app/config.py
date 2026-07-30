@@ -55,6 +55,7 @@ class Config:
         cls.SERVER_PEPPER = _required("SERVER_PEPPER").encode()
         cls.OVERPASS_USER_AGENT = os.environ.get("OVERPASS_USER_AGENT", cls.OVERPASS_USER_AGENT)
         cls.RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+        cls.RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "true").lower() != "false"
         return cls
 
 
