@@ -9,6 +9,9 @@ import SwiftUI
 
 /// The primary action on the home screen: the things you can decide on,
 /// offered directly rather than behind a solo/party menu.
+///
+/// One grouped card holding hairline-separated rows, so the section reads as
+/// a single object instead of three competing tiles.
 struct HomeTopicsSection: View {
 
     // MARK: - Properties
@@ -18,71 +21,52 @@ struct HomeTopicsSection: View {
 
     // MARK: - Constants
 
-    private let tileSize: CGFloat = 38
-    private let rowCorner: CGFloat = 16
+    private let iconWidth: CGFloat = 26
 
     // MARK: - UI
 
     var body: some View {
-        VStack(spacing: 10) {
-            ForEach(topics) { topic in
+        VStack(spacing: 0) {
+            ForEach(Array(topics.enumerated()), id: \.element.id) { index, topic in
                 Button {
                     onSelect(topic)
                 } label: {
                     row(for: topic)
                 }
                 .buttonStyle(.plain)
+
+                if index < topics.count - 1 {
+                    Divider()
+                        .padding(.leading, 58)
+                }
             }
         }
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     // MARK: - Supporting
 
     private func row(for topic: HomeView.Topic) -> some View {
-        HStack(spacing: 14) {
-            iconTile(for: topic)
+        HStack(spacing: 16) {
+            Image(systemName: topic.systemImage)
+                .font(Constants.Fonts.bodyLarge)
+                .foregroundColor(Constants.Colors.orangePrimary)
+                .frame(width: iconWidth)
 
             Text(topic.title)
-                .font(Constants.Fonts.bodySemibold)
+                .font(Constants.Fonts.body)
                 .foregroundColor(.primary)
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.secondary.opacity(0.5))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Color.white)
-        .cornerRadius(rowCorner)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-
-    private func iconTile(for topic: HomeView.Topic) -> some View {
-        RoundedRectangle(cornerRadius: 11)
-            .fill(tint(for: topic).opacity(0.18))
-            .frame(width: tileSize, height: tileSize)
-            .overlay(
-                Image(systemName: topic.systemImage)
-                    .font(Constants.Fonts.bodyLarge)
-                    .foregroundColor(tint(for: topic))
-            )
-    }
-
-    // MARK: - Helpers
-
-    /// Each topic keeps its own tint so the rows are distinguishable at a
-    /// glance instead of being three identical orange blocks.
-    private func tint(for topic: HomeView.Topic) -> Color {
-        switch topic.id {
-        case "food":
-            return Constants.Colors.orangePrimary
-        case "study":
-            return Constants.Colors.amber
-        default:
-            return Constants.Colors.peach
-        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 17)
+        .contentShape(Rectangle())
     }
 
 }

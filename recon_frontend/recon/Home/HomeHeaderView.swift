@@ -36,13 +36,15 @@ struct HomeHeaderView: View {
     }
 
     private var greeting: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(dayPart)
                 .font(Constants.Fonts.caption)
                 .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.6)
 
-            Text("What's it gonna be, \(userName.isEmpty ? "you" : userName)?")
-                .font(Constants.Fonts.heading)
+            Text("What's it gonna be\(userName.isEmpty ? "" : ", \(userName)")?")
+                .font(Constants.Fonts.headingMedium)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

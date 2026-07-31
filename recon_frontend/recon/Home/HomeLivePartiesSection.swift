@@ -9,6 +9,10 @@ import SwiftUI
 
 /// The parties this member is still part of, with whose turn it is. Without
 /// this the home screen cannot tell anyone that a friend is waiting on them.
+///
+/// Drawn as quiet rows rather than cards: the topic list above is the loud
+/// thing on this screen, and only a party actually waiting on you gets an
+/// accent.
 struct HomeLivePartiesSection: View {
 
     // MARK: - Properties
@@ -19,62 +23,67 @@ struct HomeLivePartiesSection: View {
 
     // MARK: - Constants
 
-    /// Home is a glance, not an inbox. Anything older stays reachable from
-    /// the party itself.
+    /// Home is a glance, not an inbox.
     private let visibleCount = 3
+
+    private let dotSize: CGFloat = 7
 
     // MARK: - UI
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Happening now")
-                .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            sectionTitle
 
-            ForEach(parties.prefix(visibleCount)) { party in
-                card(for: party)
+            ForEach(Array(parties.prefix(visibleCount).enumerated()), id: \.element.id) { index, party in
+                row(for: party)
+
+                if index < min(parties.count, visibleCount) - 1 {
+                    Divider()
+                        .padding(.leading, 20)
+                }
             }
         }
+    }
+
+    private var sectionTitle: some View {
+        Text("Happening now")
+            .font(Constants.Fonts.caption)
+            .foregroundColor(.secondary)
+            .textCase(.uppercase)
+            .tracking(0.6)
+            .padding(.bottom, 10)
     }
 
     // MARK: - Supporting
 
-    private func card(for party: PartySummaryDTO) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
+    private func row(for party: PartySummaryDTO) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(
+                    isYourTurn(party)
+                        ? Constants.Colors.orangePrimary
+                        : Color.secondary.opacity(0.3)
+                )
+                .frame(width: dotSize, height: dotSize)
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(party.title)
-                    .font(Constants.Fonts.bodySemibold)
+                    .font(Constants.Fonts.body)
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
-                Spacer()
-
-                if isYourTurn(party) {
-                    turnPill
-                }
+                Text(statusLine(party))
+                    .font(Constants.Fonts.caption)
+                    .foregroundColor(.secondary)
             }
 
-            Text(statusLine(party))
-                .font(Constants.Fonts.label)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
+            Spacer()
 
-    private var turnPill: some View {
-        Text("your turn")
-            .font(Constants.Fonts.caption)
-            .foregroundColor(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(
-                Capsule().fill(Constants.Colors.orangePrimary)
-            )
+            Image(systemName: "chevron.right")
+                .font(Constants.Fonts.caption)
+                .foregroundColor(Color.secondary.opacity(0.5))
+        }
+        .padding(.vertical, 12)
     }
 
 }

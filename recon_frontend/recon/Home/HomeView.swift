@@ -79,7 +79,7 @@ struct HomeView: View {
             Constants.Colors.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
+                VStack(alignment: .leading, spacing: 32) {
                     HomeHeaderView(
                         userName: userName,
                         profilePicturePath: profilePicturePath,
@@ -107,8 +107,8 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 12)
-                .padding(.bottom, 32)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
             .refreshable {
                 viewModel.refresh()

@@ -42,6 +42,8 @@ struct HomePreviousPicksSection: View {
             Text("Recent")
                 .font(Constants.Fonts.caption)
                 .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.6)
 
             Spacer()
 
