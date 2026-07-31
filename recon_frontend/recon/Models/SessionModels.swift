@@ -60,6 +60,41 @@ struct SessionEnvelope: Codable, Sendable {
     let party: SessionDTO
 }
 
+/// A live party as it appears in the caller's list, with the viewer's own
+/// progress attached so the home screen can say whose turn it is.
+struct PartySummaryDTO: Codable, Sendable, Identifiable {
+    struct Viewer: Codable, Sendable {
+        let swipedCount: Int
+        let hasPicked: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case swipedCount = "swiped_count"
+            case hasPicked = "has_picked"
+        }
+    }
+
+    let id: String
+    let title: String
+    let topic: String
+    let state: String
+    let optionCount: Int
+    let memberCount: Int
+    let submittedCount: Int
+    let members: [ParticipantDTO]
+    let viewer: Viewer
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, topic, state, members, viewer
+        case optionCount = "option_count"
+        case memberCount = "member_count"
+        case submittedCount = "submitted_count"
+    }
+}
+
+struct PartyListEnvelope: Codable, Sendable {
+    let parties: [PartySummaryDTO]
+}
+
 struct OptionsEnvelope: Codable, Sendable {
     let options: [OptionDTO]
 }

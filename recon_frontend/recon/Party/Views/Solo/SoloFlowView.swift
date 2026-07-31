@@ -19,17 +19,31 @@ struct SoloFlowView: View {
     @State private var err = false
     @State private var navSwipe = false
 
+    /// When home already asked what we are deciding, the topic page is
+    /// skipped and the session starts immediately.
+    let presetTopic: String?
+
     @Environment(\.dismiss) private var dismiss
+
+    init(presetTopic: String? = nil) {
+        self.presetTopic = presetTopic
+    }
 
     // MARK: - UI
 
     var body: some View {
-        VStack(spacing: 0) {
-            topicPager
+        Group {
+            if presetTopic != nil {
+                startingState
+            } else {
+                VStack(spacing: 0) {
+                    topicPager
 
-            pageIndicator
+                    pageIndicator
 
-            startButton
+                    startButton
+                }
+            }
         }
         .alert("Error", isPresented: $err) {
             Button("OK", role: .cancel) { }
@@ -49,6 +63,29 @@ struct SoloFlowView: View {
         }
         .navigationTitle("Solo")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            if let presetTopic, !start, !navSwipe {
+                startSolo(with: presetTopic)
+            }
+        }
+    }
+
+    /// Shown while the preset topic's deck is being built.
+    private var startingState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            ProgressView()
+                .scaleEffect(1.4)
+
+            Text("Building your deck…")
+                .font(Constants.Fonts.bodyRegularRounded)
+                .foregroundColor(.secondary)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .background(Constants.Colors.background.ignoresSafeArea())
     }
 
     private var topicPager: some View {

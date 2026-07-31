@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// The horizontally scrolling strip of the user's recent final picks, with a
-/// "See all" pill that jumps to the profile.
+/// The user's recent final picks as compact rows. Cards were wider than the
+/// names that had to fit in them, so every title truncated.
 struct HomePreviousPicksSection: View {
 
     // MARK: - Properties
@@ -18,90 +18,74 @@ struct HomePreviousPicksSection: View {
 
     // MARK: - Constants
 
-    private let cardWidth: CGFloat = 110
-    private let cardHeight: CGFloat = 80
-    private let cardCornerRadius: CGFloat = 12
+    private let thumbSize: CGFloat = 38
+    private let visibleCount = 3
 
     // MARK: - UI
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            titleRow
+        VStack(alignment: .leading, spacing: 10) {
+            header
 
-            picksRow
+            if recentPicks.isEmpty {
+                emptyLabel
+            } else {
+                ForEach(recentPicks.prefix(visibleCount)) { pick in
+                    row(for: pick)
+                }
+            }
         }
     }
 
-    private var titleRow: some View {
-        HStack {
-            Text("Your previous picks")
-                .font(Constants.Fonts.sectionTitle)
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text("Recent")
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
 
             Spacer()
 
-            seeAllButton
-        }
-    }
-
-    private var seeAllButton: some View {
-        Button {
-            onSeeAll()
-        } label: {
-            Capsule()
-                .fill(Constants.Colors.accent)
-                .frame(width: 80, height: 32)
-                .overlay(
-                    Text("See all")
-                        .font(Constants.Fonts.labelMedium)
-                        .foregroundColor(.white)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var picksRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 18) {
-                if recentPicks.isEmpty {
-                    emptyLabel
-                } else {
-                    ForEach(recentPicks) { pick in
-                        pickCard(for: pick)
-                    }
-                }
+            Button {
+                onSeeAll()
+            } label: {
+                Text("See all")
+                    .font(Constants.Fonts.caption)
+                    .foregroundColor(Constants.Colors.orangePrimary)
             }
-            .padding(.vertical, 4)
+            .buttonStyle(.plain)
         }
     }
 
     private var emptyLabel: some View {
-        Text("No recent picks yet")
+        Text("Nothing decided yet")
             .font(Constants.Fonts.label)
             .foregroundColor(.secondary)
-            .padding(.vertical, 20)
+            .padding(.vertical, 4)
     }
 
     // MARK: - Supporting
 
-    private func pickCard(for pick: FinalPick) -> some View {
-        VStack(spacing: 8) {
+    private func row(for pick: FinalPick) -> some View {
+        HStack(spacing: 12) {
             OptionArtwork(
                 name: pick.name,
                 imageUrl: pick.imageUrl,
-                initialSize: 34
+                initialSize: 18
             )
-            .frame(width: cardWidth, height: cardHeight)
-            .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius))
+            .frame(width: thumbSize, height: thumbSize)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
 
             Text(pick.name)
-                .font(Constants.Fonts.cardTitle)
+                .font(Constants.Fonts.body)
                 .foregroundColor(.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(width: cardWidth, alignment: .center)
+                .lineLimit(1)
+
+            Spacer()
+
+            Text(pick.timeAgo)
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
         }
-        .frame(width: cardWidth, alignment: .top)
     }
 
 }
@@ -112,4 +96,5 @@ struct HomePreviousPicksSection: View {
         onSeeAll: {}
     )
     .padding()
+    .background(Constants.Colors.background)
 }

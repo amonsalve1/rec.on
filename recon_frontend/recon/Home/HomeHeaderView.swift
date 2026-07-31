@@ -25,22 +25,39 @@ struct HomeHeaderView: View {
     // MARK: - UI
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center) {
             greeting
 
             Spacer()
 
             avatarButton
         }
-        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
     }
 
     private var greeting: some View {
-        Text("Hi \(userName.isEmpty ? "User" : userName)!")
-            .font(Constants.Fonts.display)
-            .padding(.vertical, Constants.Padding.screenHorizontal)
-            .padding(.horizontal, Constants.Padding.screenHorizontal)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(dayPart)
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
+
+            Text("What's it gonna be, \(userName.isEmpty ? "you" : userName)?")
+                .font(Constants.Fonts.heading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Time-of-day line above the greeting — a small sign the screen is live
+    /// rather than a static menu.
+    private var dayPart: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 0..<12:
+            return "Morning"
+        case 12..<17:
+            return "Afternoon"
+        default:
+            return "Evening"
+        }
     }
 
     private var avatarButton: some View {
@@ -61,11 +78,21 @@ struct HomeHeaderView: View {
                 .resizable()
                 .scaledToFill()
         } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .scaledToFill()
-                .foregroundColor(.gray)
+            // initial on brand, rather than a gray system silhouette
+            Constants.Colors.peach
+                .overlay(
+                    Text(initial)
+                        .font(Constants.Fonts.bodySemibold)
+                        .foregroundColor(Constants.Colors.ink)
+                )
         }
+    }
+
+    private var initial: String {
+        guard let first = userName.trimmingCharacters(in: .whitespaces).first else {
+            return "?"
+        }
+        return String(first).uppercased()
     }
 
     // MARK: - Helpers

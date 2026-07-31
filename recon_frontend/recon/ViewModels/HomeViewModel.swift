@@ -10,6 +10,14 @@ import Foundation
 
 extension HomeView {
 
+    /// One thing a member can decide on, offered straight from the home
+    /// screen so starting a session takes a single tap.
+    struct Topic: Identifiable {
+        let id: String
+        let title: String
+        let systemImage: String
+    }
+
     /// The ViewModel for the Home page view.
     @MainActor
     class ViewModel: ObservableObject {
@@ -21,13 +29,15 @@ extension HomeView {
         @Published var showProfileFromPicks = false
         @Published var showEditProfile = false
         @Published var recentPicks: [FinalPick] = []
+        @Published private(set) var liveParties: [PartySummaryDTO] = []
 
-        /// Placeholder friend list shown until the backend provides one.
-        let friends: [Friend] = [
-            .init(name: "Mei Mei", imageName: "friend1"),
-            .init(name: "Larry", imageName: "friend2"),
-            .init(name: "Milly", imageName: "friend3"),
-            .init(name: "Uni", imageName: "friend4")
+        /// The topic the user tapped, awaiting a solo-or-party choice.
+        @Published var pendingTopic: Topic?
+
+        let topics: [Topic] = [
+            Topic(id: "food", title: "Food nearby", systemImage: "fork.knife"),
+            Topic(id: "study", title: "Study spots", systemImage: "books.vertical"),
+            Topic(id: "movie", title: "Movies", systemImage: "film")
         ]
 
         private var bag = Set<AnyCancellable>()
@@ -42,13 +52,70 @@ extension HomeView {
                     self?.loadRecentPicks()
                 }
                 .store(in: &bag)
+
+            NotificationCenter.default
+                .publisher(for: .sessionFinished)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    self?.refresh()
+                }
+                .store(in: &bag)
         }
 
-        // MARK: - Helpers
+        // MARK: - Requests
+
+        /// Reloads everything the home screen shows.
+        func refresh() {
+            loadRecentPicks()
+            loadLiveParties()
+        }
+
+        /// Fetches the parties this user is still part of.
+        func loadLiveParties() {
+            RecOnAPI.shared.listParties { result in
+                DispatchQueue.main.async {
+                    if case .success(let parties) = result {
+                        self.liveParties = parties
+                    }
+                }
+            }
+        }
 
         /// Loads the persisted recent picks into `recentPicks`.
         func loadRecentPicks() {
             recentPicks = RecentPicksStore.load()
+        }
+
+        // MARK: - Helpers
+
+        /// A short line describing what a party is waiting on, written from
+        /// this member's point of view.
+        func statusLine(for party: PartySummaryDTO) -> String {
+            if party.state == "lobby" {
+                return party.memberCount > 1
+                    ? "\(party.memberCount) in the lobby"
+                    : "Waiting for friends to join"
+            }
+
+            if party.viewer.swipedCount < party.optionCount {
+                let left = party.optionCount - party.viewer.swipedCount
+                return "\(left) card\(left == 1 ? "" : "s") left to swipe"
+            }
+
+            if !party.viewer.hasPicked {
+                return "Time to pick your favorite"
+            }
+
+            let waiting = party.memberCount - party.submittedCount
+            return waiting > 0
+                ? "Waiting on \(waiting) other\(waiting == 1 ? "" : "s")"
+                : "Everyone has picked"
+        }
+
+        /// True when the party is blocked on this member rather than others.
+        func isYourTurn(_ party: PartySummaryDTO) -> Bool {
+            guard party.state == "swiping" else { return false }
+            return party.viewer.swipedCount < party.optionCount || !party.viewer.hasPicked
         }
 
     }

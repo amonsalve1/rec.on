@@ -25,7 +25,12 @@ struct PartySetupView: View {
 
     let onComplete: (() -> Void)?
 
-    init(onComplete: (() -> Void)? = nil) {
+    /// When home already asked what we are deciding, the topic page is
+    /// skipped and the party is created straight away.
+    let presetTopic: String?
+
+    init(presetTopic: String? = nil, onComplete: (() -> Void)? = nil) {
+        self.presetTopic = presetTopic
         self.onComplete = onComplete
     }
 
@@ -39,9 +44,17 @@ struct PartySetupView: View {
         VStack(spacing: 0) {
             pages
 
-            pageIndicator
+            if presetTopic == nil {
+                pageIndicator
+            }
 
             bottomButton
+        }
+        .task {
+            if let presetTopic, viewModel.session == nil, !start {
+                topic = presetTopic
+                startParty(with: presetTopic)
+            }
         }
         .navigationTitle("Party")
         .navigationBarTitleDisplayMode(.inline)
@@ -62,18 +75,23 @@ struct PartySetupView: View {
         }
     }
 
+    @ViewBuilder
     private var pages: some View {
-        TabView(selection: $pg) {
-            PartyTopicPage { topicKey in
-                topic = topicKey
-                startParty(with: topicKey)
-            }
-            .tag(0)
+        if presetTopic == nil {
+            TabView(selection: $pg) {
+                PartyTopicPage { topicKey in
+                    topic = topicKey
+                    startParty(with: topicKey)
+                }
+                .tag(0)
 
+                PartyInvitePage(viewModel: viewModel)
+                    .tag(1)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+        } else {
             PartyInvitePage(viewModel: viewModel)
-                .tag(1)
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
     }
 
     private var pageIndicator: some View {

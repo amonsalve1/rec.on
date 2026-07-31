@@ -32,6 +32,29 @@ extension RecOnAPI {
         }
     }
 
+    /// The caller's live parties, for the home screen.
+    func listParties(completion: @escaping @Sendable (Result<[PartySummaryDTO], Error>) -> Void) {
+        guard !APIConfig.authToken.isEmpty else {
+            completion(.success([]))
+            return
+        }
+
+        let url = endpoint("parties")
+        session.request(url, headers: headers)
+        .responseData { response in
+            let statusCode = response.response?.statusCode ?? -1
+
+            if (200..<300).contains(statusCode), let data = response.data,
+               let envelope = try? JSONDecoder().decode(PartyListEnvelope.self, from: data) {
+                completion(.success(envelope.parties))
+            } else {
+                self.handleTokenRefresh(statusCode: statusCode, errorData: response.data, retry: {
+                    self.listParties(completion: completion)
+                }, completion: completion)
+            }
+        }
+    }
+
     func joinParty(code: String, completion: @escaping @Sendable (Result<SessionDTO, Error>) -> Void) {
         let url = endpoint("parties/join")
         session.request(

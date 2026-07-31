@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// The home screen: header, solo/party entry points, friends, and recent
-/// picks, with a slide-in side menu layered on top.
+/// The home screen: start a decision in one tap, see the ones already
+/// running, and glance at what was decided lately.
 struct HomeView: View {
 
     // MARK: - Properties
@@ -19,10 +19,12 @@ struct HomeView: View {
     @AppStorage("userLocation") var userLocation: String = ""
     @AppStorage("userProfilePicturePath") var profilePicturePath: String = ""
 
+    @State private var soloTopic: String?
+    @State private var partyTopic: String?
+
     // MARK: - Constants
 
     private let menuWidthRatio: CGFloat = 0.7
-    private let glyphSize: CGFloat = 32
 
     // MARK: - UI
 
@@ -36,6 +38,7 @@ struct HomeView: View {
                         .zIndex(1)
                 }
             }
+            .navigationBarHidden(true)
             .fullScreenCover(isPresented: $viewModel.showProfile) {
                 ProfileView(userId: nil)
             }
@@ -45,66 +48,71 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.showEditProfile) {
                 editProfileSheet
             }
-            .navigationTitle("Home")
-            .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $viewModel.pendingTopic) { topic in
+                HomeStartSheet(
+                    topic: topic,
+                    onSolo: {
+                        viewModel.pendingTopic = nil
+                        soloTopic = topic.id
+                    },
+                    onParty: {
+                        viewModel.pendingTopic = nil
+                        partyTopic = topic.id
+                    }
+                )
+                .presentationDetents([.height(280)])
+            }
+            .navigationDestination(item: $soloTopic) { topic in
+                SoloFlowView(presetTopic: topic)
+            }
+            .navigationDestination(item: $partyTopic) { topic in
+                PartySetupView(presetTopic: topic)
+            }
             .task {
-                viewModel.loadRecentPicks()
+                viewModel.refresh()
             }
         }
     }
 
     private var content: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Constants.Colors.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: Constants.Padding.sectionSpacing) {
-                    header
+                VStack(alignment: .leading, spacing: 26) {
+                    HomeHeaderView(
+                        userName: userName,
+                        profilePicturePath: profilePicturePath,
+                        onMenuTap: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                viewModel.showMenu.toggle()
+                            }
+                        }
+                    )
 
-                    sections
+                    HomeTopicsSection(topics: viewModel.topics) { topic in
+                        viewModel.pendingTopic = topic
+                    }
+
+                    if !viewModel.liveParties.isEmpty {
+                        HomeLivePartiesSection(
+                            parties: viewModel.liveParties,
+                            statusLine: viewModel.statusLine,
+                            isYourTurn: viewModel.isYourTurn
+                        )
+                    }
+
+                    HomePreviousPicksSection(recentPicks: viewModel.recentPicks) {
+                        viewModel.showProfileFromPicks = true
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 32)
             }
-
-            glyphFooter
-        }
-    }
-
-    private var header: some View {
-        HomeHeaderView(
-            userName: userName,
-            profilePicturePath: profilePicturePath,
-            onMenuTap: {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                    viewModel.showMenu.toggle()
-                }
+            .refreshable {
+                viewModel.refresh()
             }
-        )
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, -Constants.Padding.screenHorizontal)
-    }
-
-    private var sections: some View {
-        VStack(spacing: Constants.Padding.sectionSpacing) {
-            HomeSoloPartySection()
-
-            HomeFriendsSection(friends: viewModel.friends)
-
-            HomePreviousPicksSection(recentPicks: viewModel.recentPicks) {
-                viewModel.showProfileFromPicks = true
-            }
-        }
-        .padding(.horizontal, Constants.Padding.screenHorizontal)
-    }
-
-    private var glyphFooter: some View {
-        VStack {
-            Spacer()
-
-            Image("RecOnGlyph")
-                .resizable()
-                .scaledToFit()
-                .frame(width: glyphSize, height: glyphSize)
-                .padding(.bottom, 20)
         }
     }
 
