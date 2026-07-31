@@ -99,6 +99,7 @@ struct OnboardingSwipePage: View {
                     off = value.translation
                 }
                 .onEnded { value in
+                    guard !flew else { return }
                     handleDragEnd(translation: value.translation)
                 }
         )

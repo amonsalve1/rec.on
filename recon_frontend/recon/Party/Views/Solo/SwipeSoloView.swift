@@ -17,6 +17,7 @@ struct SwipeSoloView: View {
     @State private var i = 0
     @State private var off: CGSize = .zero
     @State private var op: Double = 1.0
+    @State private var isAnimating = false
     @State private var showRes = false
 
     @Environment(\.dismiss) private var dismiss
@@ -176,9 +177,11 @@ struct SwipeSoloView: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
+                    guard !isAnimating else { return }
                     off = value.translation
                 }
                 .onEnded { value in
+                    guard !isAnimating else { return }
                     let dx = value.translation.width
                     if dx > swipeThreshold {
                         handleSwipe(liked: true)
@@ -233,8 +236,13 @@ struct SwipeSoloView: View {
     // MARK: - Helpers
 
     /// Records the swipe, animates the card off screen, then advances the deck.
+    ///
+    /// `isAnimating` gates re-entry: taps faster than the throw animation
+    /// would otherwise stack, blanking the card for a frame and skipping
+    /// past a candidate without recording a verdict for it.
     private func handleSwipe(liked: Bool) {
-        guard i < viewModel.candidates.count else { return }
+        guard !isAnimating, i < viewModel.candidates.count else { return }
+        isAnimating = true
 
         let current = viewModel.candidates[i]
         let direction: CGFloat = liked ? 1 : -1
@@ -250,6 +258,7 @@ struct SwipeSoloView: View {
             off = .zero
             op = 1
             i += 1
+            isAnimating = false
         }
     }
 

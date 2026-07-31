@@ -21,6 +21,7 @@ struct SwipePartyView: View {
     @State private var showRes = false
     @State private var navWait = false
     @State private var loadingLiked = false
+    @State private var isAnimating = false
     @Environment(\.dismiss) private var dismiss
 
     let onComplete: (() -> Void)?
@@ -205,9 +206,11 @@ struct SwipePartyView: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
+                    guard !isAnimating else { return }
                     off = value.translation
                 }
                 .onEnded { value in
+                    guard !isAnimating else { return }
                     handleSwipeEnd(translation: value.translation)
                 }
         )
@@ -264,8 +267,12 @@ struct SwipePartyView: View {
         }
     }
 
+    /// `isAnimating` gates re-entry: taps faster than the throw animation
+    /// would otherwise stack, blanking the card for a frame and skipping past
+    /// a candidate without recording a verdict for it.
     private func handleSwipe(liked: Bool) {
-        guard i < viewModel.candidates.count else { return }
+        guard !isAnimating, i < viewModel.candidates.count else { return }
+        isAnimating = true
 
         let current = viewModel.candidates[i]
         let direction: CGFloat = liked ? 1 : -1
@@ -281,6 +288,7 @@ struct SwipePartyView: View {
             off = .zero
             op = 1
             i += 1
+            isAnimating = false
         }
     }
 
