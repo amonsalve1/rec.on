@@ -8,7 +8,7 @@ from ..extensions import db, limiter
 from ..models import FinalPick, Option, Party, PartyMember, Swipe
 from ..models.party import MIN_OPTIONS, TOPICS
 from ..places import ProviderUnavailable
-from ..places.resolver import resolve
+from ..places.resolver import DEFAULT_LIMIT, resolve
 from ..services.access_tokens import utcnow
 from .auth import body
 from .deps import current_member, current_party, current_user, party_scope, require_auth
@@ -19,6 +19,7 @@ bp = Blueprint("parties", __name__)
 SWIPE_WINDOW = timedelta(hours=24)
 COORD_PLACES = 3  # ~110m. rounded before it is ever persisted.
 LIST_LIMIT = 10
+PREVIEW_POOL = 30
 
 
 def snap(value):
@@ -110,6 +111,42 @@ def create():
     db.session.commit()
 
     return jsonify(party=party_dict(party)), 201
+
+
+@bp.get("/preview")
+@require_auth
+@limiter.limit("30 per hour")
+def preview():
+    """One real nearby place, for the home screen's food card.
+
+    Deliberately does not create anything: it reuses the resolver, so after
+    the first call for a rounded coordinate the provider cache answers and
+    this costs a single query. Prefers a candidate that has a photo, since
+    the whole point is showing one.
+    """
+    lat, lon = snap(request.args.get("lat")), snap(request.args.get("lon"))
+    if lat is None or lon is None:
+        raise BadRequest("invalid_location", "lat and lon are required")
+    if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+        raise BadRequest("invalid_location", "coordinates out of range")
+
+    try:
+        # look wider than a party's deck: the point is to find one that has a
+        # photograph, and the nearest handful often have none
+        candidates, provider = resolve(topic="restaurant", lat=lat, lon=lon, limit=PREVIEW_POOL)
+    except ProviderUnavailable as err:
+        raise ServiceUnavailable("provider_unavailable", str(err))
+
+    if not candidates:
+        return jsonify(place=None, count=0)
+
+    pick = next((c for c in candidates if c.image_url), candidates[0])
+    return jsonify(
+        place={"name": pick.name, "image_url": pick.image_url, "address": pick.address},
+        # the count a party would actually offer, not the size of the pool
+        count=min(len(candidates), DEFAULT_LIMIT),
+        provider=provider,
+    )
 
 
 @bp.get("")

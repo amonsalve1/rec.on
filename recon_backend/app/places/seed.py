@@ -5,30 +5,31 @@ from .base import PlaceCandidate, ProviderUnavailable
 # these is still a real party, but it is recorded as provider='seed' so a
 # degraded one is diagnosable afterwards instead of looking identical to a
 # party built from real nearby places.
-# (name, tags, wikidata_id). The wikidata id is only present where the entry
-# is a real-world subject with a commons image behind it — the resolver turns
-# those into artwork. Generic entries ("Study Room") deliberately have none;
-# the client draws its own card for those.
+# (name, tags, wikidata_id). An id is present only where it was verified to
+# name the right entity AND that entity has a P18 image; everything else is
+# None and the client draws its own lettered card. Do not add an id from
+# memory: check the label and the image first, or the deck ends up showing a
+# photograph of something unrelated.
 SEEDS = {
     "restaurant": [
-        ("Olive Garden", ["Italian", "Casual"], "Q3045150"),
+        ("Olive Garden", ["Italian", "Casual"], "Q3045312"),
         ("Sushi Sake", ["Japanese", "Sushi"], None),
         ("Chipotle", ["Mexican", "Fast Casual"], "Q465751"),
         ("Thai Express", ["Thai", "Quick"], None),
-        ("Five Guys", ["Burgers", "Fast Food"], "Q1439803"),
+        ("Five Guys", ["Burgers", "Fast Food"], None),
         ("Domino's Pizza", ["Pizza", "Delivery"], "Q839466"),
-        ("Panda Express", ["Chinese", "Fast Food"], "Q1055786"),
-        ("Texas Roadhouse", ["Steakhouse", "Sit Down"], "Q7708986"),
+        ("Panda Express", ["Chinese", "Fast Food"], "Q136378163"),
+        ("Texas Roadhouse", ["Steakhouse", "Sit Down"], None),
     ],
     "movie": [
         ("The Matrix", ["Sci-Fi", "Action"], "Q83495"),
         ("Inception", ["Sci-Fi", "Thriller"], "Q25188"),
-        ("The Dark Knight", ["Action", "Crime"], "Q166262"),
+        ("The Dark Knight", ["Action", "Crime"], None),
         ("Pulp Fiction", ["Crime", "Drama"], "Q104123"),
-        ("Interstellar", ["Sci-Fi", "Drama"], "Q13417189"),
-        ("The Shawshank Redemption", ["Drama"], "Q172241"),
-        ("Fight Club", ["Drama", "Thriller"], "Q190050"),
-        ("Goodfellas", ["Crime", "Drama"], "Q184768"),
+        ("Interstellar", ["Sci-Fi", "Drama"], None),
+        ("The Shawshank Redemption", ["Drama"], None),
+        ("Fight Club", ["Drama", "Thriller"], None),
+        ("Goodfellas", ["Crime", "Drama"], None),
     ],
     "activity": [
         ("Library", ["Quiet", "Free"], None),
