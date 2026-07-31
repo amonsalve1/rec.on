@@ -22,6 +22,7 @@ struct HomeView: View {
     @State private var soloTopic: String?
     @State private var partyTopic: String?
     @State private var resumingParty: PartySummaryDTO?
+    @State private var showJoin = false
 
     // MARK: - Constants
 
@@ -48,6 +49,12 @@ struct HomeView: View {
             }
             .sheet(isPresented: $viewModel.showEditProfile) {
                 editProfileSheet
+            }
+            .sheet(isPresented: $showJoin) {
+                HomeJoinSheet { code, done in
+                    viewModel.join(code: code, completion: done)
+                }
+                .presentationDetents([.height(340)])
             }
             .sheet(item: $viewModel.pendingTopic) { topic in
                 HomeStartSheet(
@@ -91,6 +98,9 @@ struct HomeView: View {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                                 viewModel.showMenu.toggle()
                             }
+                        },
+                        onJoinTap: {
+                            showJoin = true
                         }
                     )
                     .padding(.horizontal, 24)
@@ -110,7 +120,8 @@ struct HomeView: View {
                             isYourTurn: viewModel.isYourTurn,
                             onSelect: { party in
                                 resumingParty = party
-                            }
+                            },
+                            onLeave: viewModel.leave
                         )
                     }
 

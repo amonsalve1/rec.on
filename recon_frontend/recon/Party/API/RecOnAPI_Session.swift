@@ -32,6 +32,26 @@ extension RecOnAPI {
         }
     }
 
+    /// Leaves a party. The caller drops out of the electorate and the party
+    /// stops appearing in their list.
+    func leaveParty(sessionId: String, completion: @escaping @Sendable (Result<Void, Error>) -> Void) {
+        let url = endpoint("parties/\(sessionId)/leave")
+        session.request(url, method: .post, headers: headers)
+        .responseData { response in
+            let statusCode = response.response?.statusCode ?? -1
+
+            if (200..<300).contains(statusCode) {
+                completion(.success(()))
+            } else {
+                self.handleTokenRefresh(statusCode: statusCode, errorData: response.data, retry: {
+                    self.leaveParty(sessionId: sessionId, completion: completion)
+                }, completion: { result in
+                    completion(result)
+                })
+            }
+        }
+    }
+
     /// One real nearby place plus how many are around, for the home card.
     func previewNearby(lat: Double, lon: Double, completion: @escaping @Sendable (Result<PlacePreviewEnvelope, Error>) -> Void) {
         guard !APIConfig.authToken.isEmpty else {

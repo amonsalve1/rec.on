@@ -18,6 +18,7 @@ struct HomeLivePartiesSection: View {
     let statusLine: (PartySummaryDTO) -> String
     let isYourTurn: (PartySummaryDTO) -> Bool
     let onSelect: (PartySummaryDTO) -> Void
+    let onLeave: (PartySummaryDTO) -> Void
 
     // MARK: - Constants
 
@@ -39,12 +40,16 @@ struct HomeLivePartiesSection: View {
 
             VStack(spacing: 10) {
                 ForEach(parties.prefix(visibleCount)) { party in
-                    Button {
-                        onSelect(party)
-                    } label: {
-                        card(for: party)
-                    }
-                    .buttonStyle(PressableCard())
+                    // a plain tap target rather than a Button: a Button would
+                    // swallow the horizontal drag that reveals Leave
+                    card(for: party)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            onSelect(party)
+                        }
+                        .swipeActionsCompat {
+                            onLeave(party)
+                        }
                 }
             }
             .padding(.horizontal, 24)
@@ -135,7 +140,8 @@ struct HomeLivePartiesSection: View {
         parties: [],
         statusLine: { _ in "3 cards left to swipe" },
         isYourTurn: { _ in true },
-        onSelect: { _ in }
+        onSelect: { _ in },
+        onLeave: { _ in }
     )
     .padding(.vertical)
     .background(Constants.Colors.background)

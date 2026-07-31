@@ -17,6 +17,7 @@ struct HomeHeaderView: View {
     let userName: String
     let profilePicturePath: String
     let onMenuTap: () -> Void
+    var onJoinTap: (() -> Void)?
 
     // MARK: - Constants
 
@@ -25,14 +26,33 @@ struct HomeHeaderView: View {
     // MARK: - UI
 
     var body: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 12) {
             greeting
 
             Spacer()
 
+            if let onJoinTap {
+                joinButton(action: onJoinTap)
+            }
+
             avatarButton
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Entry point for joining someone else's party by code.
+    private func joinButton(action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: "person.badge.plus")
+                .font(Constants.Fonts.body)
+                .foregroundColor(Constants.Colors.ink)
+                .frame(width: 38, height: 38)
+                .background(Color.white.opacity(0.75))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var greeting: some View {

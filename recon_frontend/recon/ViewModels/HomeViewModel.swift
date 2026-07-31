@@ -135,6 +135,39 @@ extension HomeView {
             recentPicks = RecentPicksStore.load()
         }
 
+        /// Leaves a party from the home list. Removed locally first so the
+        /// row disappears under the thumb rather than after a round trip.
+        func leave(_ party: PartySummaryDTO) {
+            liveParties.removeAll { $0.id == party.id }
+
+            RecOnAPI.shared.leaveParty(sessionId: party.id) { _ in
+                DispatchQueue.main.async {
+                    self.loadLiveParties()
+                }
+            }
+        }
+
+        /// Joins a party by the code a friend shared.
+        func join(code: String, completion: @escaping (Bool) -> Void) {
+            let trimmed = code.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else {
+                completion(false)
+                return
+            }
+
+            RecOnAPI.shared.joinParty(code: trimmed) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        self.loadLiveParties()
+                        completion(true)
+                    case .failure:
+                        completion(false)
+                    }
+                }
+            }
+        }
+
         // MARK: - Helpers
 
         /// A short line describing what a party is waiting on, written from

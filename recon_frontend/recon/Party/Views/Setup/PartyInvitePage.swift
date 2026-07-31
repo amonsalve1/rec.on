@@ -9,8 +9,10 @@ import SwiftUI
 import UIKit
 import Combine
 
-/// The second party setup page, where the host shares the invite link, other
-/// users join via a pasted link, and the current participants are listed.
+/// The second party setup page: share the code and watch people arrive.
+/// Entering someone else's code lives on the home screen, not here — this is
+/// your party, and offering to join a different one from inside it meant
+/// creating a party just to leave it.
 struct PartyInvitePage: View {
 
     // MARK: - Properties
@@ -18,18 +20,12 @@ struct PartyInvitePage: View {
     @ObservedObject var viewModel: PartySetupView.ViewModel
 
     @State private var copied = false
-    @State private var search = ""
-    @State private var join = false
-    @State private var joinErr = false
-    @State private var err = ""
 
     // MARK: - UI
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             header
-
-            searchBar
 
             copyLinkButton
 
@@ -41,11 +37,6 @@ struct PartyInvitePage: View {
         .padding(.top, 32)
         .alert("Code copied", isPresented: $copied) {
             Button("OK", role: .cancel) { }
-        }
-        .alert("Join Error", isPresented: $joinErr) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(err)
         }
         .onAppear {
             viewModel.refreshParticipants()
@@ -72,69 +63,6 @@ struct PartyInvitePage: View {
 
             Text("🎉")
                 .font(.system(size: 40))
-        }
-    }
-
-    private var searchBar: some View {
-        HStack(spacing: 8) {
-            TextField("Paste an invite code to join...", text: $search)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .onSubmit {
-                    handleSearchOrJoin()
-                }
-                .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(search.isEmpty ? .secondary : .primary)
-
-            Spacer()
-
-            if !search.isEmpty && !isJoinLink(search) {
-                clearButton
-            }
-
-            searchAccessory
-        }
-        .padding(12)
-        .background(Color.white)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.black.opacity(0.15), lineWidth: 1)
-        )
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-
-    private var clearButton: some View {
-        Button {
-            search = ""
-        } label: {
-            Image(systemName: "xmark.circle.fill")
-                .foregroundColor(.secondary)
-                .font(Constants.Fonts.body)
-        }
-    }
-
-    @ViewBuilder private var searchAccessory: some View {
-        if isJoinLink(search) && !join {
-            joinButton
-        } else if join {
-            ProgressView()
-                .scaleEffect(0.8)
-        } else {
-            Image(systemName: search.isEmpty ? "link" : "magnifyingglass")
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private var joinButton: some View {
-        Button {
-            handleSearchOrJoin()
-        } label: {
-            Text("Join")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundColor(Constants.Colors.orangePrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
         }
     }
 
@@ -205,49 +133,12 @@ struct PartyInvitePage: View {
         viewModel.inviteCode.map { "Copy code: \($0)" } ?? "Copy invite code"
     }
 
-    /// Invite codes look like ABCDE-FGHIJ; the backend tolerates the dash
-    /// and casing being retyped away.
-    private func isJoinLink(_ text: String) -> Bool {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
-        let cleaned = trimmed.replacingOccurrences(of: "-", with: "")
-        return cleaned.count >= 8 && cleaned.allSatisfy { $0.isLetter || $0.isNumber }
-    }
-
-    private func handleSearchOrJoin() {
-        let code = search.trimmingCharacters(in: .whitespaces)
-        guard !code.isEmpty, isJoinLink(code) else { return }
-
-        joinParty(code: code)
-    }
-
-    private func joinParty(code: String) {
-        join = true
-        err = ""
-
-        viewModel.joinParty(code: code) { success in
-            DispatchQueue.main.async {
-                join = false
-                if success {
-                    search = ""
-                    viewModel.refreshParticipants()
-                } else {
-                    err = "Failed to join. Please check the code and try again."
-                    joinErr = true
-                }
-            }
-        }
-    }
-
     private func copyInviteLink() {
-        if let code = viewModel.inviteCode {
-            UIPasteboard.general.string = code
-            copied = true
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
-        } else {
-            err = "Session not created yet. Please select a topic first."
-            joinErr = true
-        }
+        guard let code = viewModel.inviteCode else { return }
+
+        UIPasteboard.general.string = code
+        copied = true
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
 }
