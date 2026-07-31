@@ -39,7 +39,7 @@ struct SpinWheelView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
         .navigationTitle("Spin Wheel")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navRes) {

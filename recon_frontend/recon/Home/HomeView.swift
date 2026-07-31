@@ -80,7 +80,7 @@ struct HomeView: View {
 
     private var content: some View {
         ZStack {
-            Constants.Colors.background.ignoresSafeArea()
+            CanvasBackground()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {

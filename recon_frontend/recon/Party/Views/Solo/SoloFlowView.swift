@@ -85,7 +85,7 @@ struct SoloFlowView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
     }
 
     private var topicPager: some View {

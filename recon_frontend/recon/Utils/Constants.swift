@@ -50,8 +50,13 @@ enum Constants {
         /// Destructive and error accents.
         static let danger = Color.red
 
-        /// Neutral light background behind scrollable content.
-        static let background = Color(.systemGray6)
+        /// The app canvas: warm paper rather than the system's neutral gray,
+        /// which is the default every iOS app already sits on.
+        static let background = Color(red: 1.0, green: 0.969, blue: 0.945)
+
+        /// Tint washed behind the top of a screen so the canvas has some
+        /// depth instead of reading as one flat fill.
+        static let canvasWash = Color(red: 1.0, green: 0.78, blue: 0.62)
 
     }
 

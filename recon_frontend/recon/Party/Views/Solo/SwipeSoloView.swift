@@ -52,7 +52,7 @@ struct SwipeSoloView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
         .navigationTitle("Solo")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showRes) {

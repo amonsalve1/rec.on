@@ -50,7 +50,7 @@ struct FinalPickView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
         .navigationTitle("Final Pick")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

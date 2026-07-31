@@ -23,7 +23,7 @@ struct PartyResultsFlowView: View {
 
     var body: some View {
         ZStack {
-            Constants.Colors.background.ignoresSafeArea()
+            CanvasBackground()
 
             stepContent
         }

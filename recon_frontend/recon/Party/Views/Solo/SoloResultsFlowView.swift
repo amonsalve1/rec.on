@@ -34,7 +34,7 @@ struct SoloResultsFlowView: View {
 
     var body: some View {
         ZStack {
-            Constants.Colors.background.ignoresSafeArea()
+            CanvasBackground()
 
             if viewModel.liked.isEmpty {
                 emptyState

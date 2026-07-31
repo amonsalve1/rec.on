@@ -89,14 +89,16 @@ struct OptionArtwork: View {
     }
 
     /// Deterministic two-stop gradient per option, so the same place always
-    /// wears the same colors across the deck, results, and history.
+    /// wears the same colors across the deck, results, and history. Every
+    /// ramp ends deep enough to hold white type and to separate from the
+    /// warm canvas behind it.
     private var palette: [Color] {
         let ramps: [[Color]] = [
             [Constants.Colors.orangeLight, Constants.Colors.orangePrimary],
-            [Constants.Colors.amber, Constants.Colors.orangeLight],
-            [Constants.Colors.peach, Constants.Colors.orangePrimary],
+            [Constants.Colors.amber, Constants.Colors.orangePrimary],
+            [Constants.Colors.peach, Constants.Colors.splashBottom],
             [Constants.Colors.orangePrimary, Constants.Colors.splashBottom],
-            [Constants.Colors.splashTop, Constants.Colors.amber]
+            [Constants.Colors.splashTop, Constants.Colors.orangePrimary]
         ]
         let index = abs(name.hashValue) % ramps.count
         return ramps[index]

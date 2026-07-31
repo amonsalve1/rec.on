@@ -64,7 +64,7 @@ struct SwipePartyView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
         .navigationTitle("Party")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showRes) {

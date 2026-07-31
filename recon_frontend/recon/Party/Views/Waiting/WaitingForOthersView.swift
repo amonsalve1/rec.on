@@ -47,7 +47,7 @@ struct WaitingForOthersView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
-        .background(Constants.Colors.background.ignoresSafeArea())
+        .background(CanvasBackground())
         .navigationTitle("Waiting")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

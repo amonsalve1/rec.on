@@ -27,7 +27,7 @@ struct PartyResumeView: View {
 
     var body: some View {
         ZStack {
-            Constants.Colors.background.ignoresSafeArea()
+            CanvasBackground()
 
             if let target {
                 destination(for: target)
