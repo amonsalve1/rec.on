@@ -31,22 +31,13 @@ struct PickCard: View {
     }
 
     private var thumbnail: some View {
-        Group {
-            if let urlStr = candidate.imageUrl, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { phase in
-                    if case .success(let img) = phase {
-                        img.resizable().scaledToFill()
-                    } else {
-                        Image(candidate.imageName).resizable().scaledToFill()
-                    }
-                }
-            } else {
-                Image(candidate.imageName).resizable().scaledToFill()
-            }
-        }
+        OptionArtwork(
+            name: candidate.name,
+            imageUrl: candidate.imageUrl,
+            initialSize: 28
+        )
         .frame(width: 60, height: 60)
         .cornerRadius(12)
-        .clipped()
     }
 
     private var details: some View {
@@ -54,14 +45,16 @@ struct PickCard: View {
             Text(candidate.name)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
 
-            HStack(spacing: 4) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 12))
+            if !candidate.address.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 12))
 
-                Text(candidate.address)
+                    Text(candidate.address)
+                }
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
             }
-            .font(.system(size: 12))
-            .foregroundColor(.secondary)
 
             if !candidate.tags.isEmpty {
                 HStack(spacing: 6) {

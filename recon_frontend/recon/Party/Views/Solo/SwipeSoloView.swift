@@ -195,32 +195,12 @@ struct SwipeSoloView: View {
     }
 
     private func cardImage(for cand: PartyCandidate) -> some View {
-        Group {
-            if let imageUrl = cand.imageUrl, !imageUrl.isEmpty, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_), .empty:
-                        Image(cand.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    @unknown default:
-                        Image(cand.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                }
-            } else {
-                Image(cand.imageName)
-                    .resizable()
-                    .scaledToFill()
-            }
-        }
+        OptionArtwork(
+            name: cand.name,
+            imageUrl: cand.imageUrl,
+            initialSize: 72
+        )
         .frame(height: 160)
-        .clipped()
         .cornerRadius(18)
     }
 
@@ -229,14 +209,16 @@ struct SwipeSoloView: View {
             Text(cand.name)
                 .font(Constants.Fonts.subheading)
 
-            HStack(spacing: 4) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(Constants.Fonts.caption)
+            if !cand.address.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(Constants.Fonts.caption)
 
-                Text(cand.address)
+                    Text(cand.address)
+                }
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
             }
-            .font(Constants.Fonts.caption)
-            .foregroundColor(.secondary)
 
             HStack(spacing: 6) {
                 ForEach(cand.tags.prefix(3), id: \.self) { tag in

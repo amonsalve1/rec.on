@@ -40,32 +40,12 @@ struct RandCard: View {
     }
 
     private var cardImage: some View {
-        Group {
-            if let imageUrl = candidate.imageUrl, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_), .empty:
-                        Image(candidate.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    @unknown default:
-                        Image(candidate.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                }
-            } else {
-                Image(candidate.imageName)
-                    .resizable()
-                    .scaledToFill()
-            }
-        }
+        OptionArtwork(
+            name: candidate.name,
+            imageUrl: candidate.imageUrl,
+            initialSize: center ? 44 : 34
+        )
         .frame(height: center ? 110 : 90)
-        .clipped()
         .cornerRadius(14)
         .grayscale(center ? 0 : 1)
         .opacity(center ? 1 : 0.4)

@@ -28,32 +28,12 @@ struct WinnerCard: View {
     }
 
     private var photo: some View {
-        Group {
-            if let imageUrl = winner.imageUrl, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_), .empty:
-                        Image(winner.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    @unknown default:
-                        Image(winner.imageName)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                }
-            } else {
-                Image(winner.imageName)
-                    .resizable()
-                    .scaledToFill()
-            }
-        }
+        OptionArtwork(
+            name: winner.name,
+            imageUrl: winner.imageUrl,
+            initialSize: 96
+        )
         .frame(height: 230)
-        .clipped()
         .cornerRadius(18)
     }
 
@@ -62,14 +42,16 @@ struct WinnerCard: View {
             Text(winner.name)
                 .font(Constants.Fonts.subheading)
 
-            HStack(spacing: 4) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(Constants.Fonts.caption)
+            if !winner.address.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(Constants.Fonts.caption)
 
-                Text(winner.address)
+                    Text(winner.address)
+                }
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
             }
-            .font(Constants.Fonts.caption)
-            .foregroundColor(.secondary)
 
             HStack(spacing: 6) {
                 ForEach(winner.tags.prefix(3), id: \.self) { tag in

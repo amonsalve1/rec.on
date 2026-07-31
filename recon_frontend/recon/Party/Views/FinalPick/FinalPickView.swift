@@ -209,38 +209,12 @@ struct SelectablePickCard: View {
     }
 
     private var thumbnail: some View {
-        Group {
-            if let imageUrl = candidate.imageUrl, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_), .empty:
-                        imagePlaceholder
-                    @unknown default:
-                        imagePlaceholder
-                    }
-                }
-            } else {
-                imagePlaceholder
-            }
-        }
-    }
-
-    private var imagePlaceholder: some View {
-        RoundedRectangle(cornerRadius: imageCornerRadius)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Constants.Colors.orangeLight,
-                        Constants.Colors.orangePrimary
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+        OptionArtwork(
+            name: candidate.name,
+            imageUrl: candidate.imageUrl,
+            initialSize: 32
+        )
+        .cornerRadius(imageCornerRadius)
     }
 
     private var details: some View {

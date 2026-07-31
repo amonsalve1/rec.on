@@ -215,38 +215,12 @@ struct SwipePartyView: View {
     }
 
     private func cardImage(for cand: PartyCandidate) -> some View {
-        Group {
-            if let imageUrl = cand.imageUrl, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_), .empty:
-                        imagePlaceholder
-                    @unknown default:
-                        imagePlaceholder
-                    }
-                }
-            } else {
-                imagePlaceholder
-            }
-        }
-    }
-
-    private var imagePlaceholder: some View {
-        RoundedRectangle(cornerRadius: imageCornerRadius)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Constants.Colors.orangeLight,
-                        Constants.Colors.orangePrimary
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+        OptionArtwork(
+            name: cand.name,
+            imageUrl: cand.imageUrl,
+            initialSize: 72
+        )
+        .cornerRadius(imageCornerRadius)
     }
 
     private func cardDetails(for cand: PartyCandidate) -> some View {
@@ -254,13 +228,16 @@ struct SwipePartyView: View {
             Text(cand.name)
                 .font(Constants.Fonts.subheading)
 
-            HStack(spacing: 4) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(Constants.Fonts.caption)
-                Text(cand.address)
+            if !cand.address.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(Constants.Fonts.caption)
+
+                    Text(cand.address)
+                }
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
             }
-            .font(Constants.Fonts.caption)
-            .foregroundColor(.secondary)
 
             HStack(spacing: 6) {
                 ForEach(cand.tags.prefix(3), id: \.self) { tag in

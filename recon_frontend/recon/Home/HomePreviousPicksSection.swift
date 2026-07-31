@@ -86,50 +86,22 @@ struct HomePreviousPicksSection: View {
 
     private func pickCard(for pick: FinalPick) -> some View {
         VStack(spacing: 8) {
-            pickImage(for: pick)
-                .frame(width: cardWidth, height: cardHeight)
-                .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius))
+            OptionArtwork(
+                name: pick.name,
+                imageUrl: pick.imageUrl,
+                initialSize: 34
+            )
+            .frame(width: cardWidth, height: cardHeight)
+            .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius))
 
             Text(pick.name)
                 .font(Constants.Fonts.cardTitle)
                 .foregroundColor(.primary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .frame(width: cardWidth, alignment: .center)
         }
-    }
-
-    @ViewBuilder
-    private func pickImage(for pick: FinalPick) -> some View {
-        if let url = URL(string: pick.imageUrl), pick.imageUrl.hasPrefix("http") {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure, .empty:
-                    fallbackArt
-                @unknown default:
-                    fallbackArt
-                }
-            }
-        } else {
-            fallbackArt
-        }
-    }
-
-    private var fallbackArt: some View {
-        RoundedRectangle(cornerRadius: cardCornerRadius)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Constants.Colors.orangeLight,
-                        Constants.Colors.orangePrimary
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+        .frame(width: cardWidth, alignment: .top)
     }
 
 }
