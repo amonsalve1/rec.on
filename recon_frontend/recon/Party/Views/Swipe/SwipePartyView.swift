@@ -26,9 +26,14 @@ struct SwipePartyView: View {
 
     let onComplete: (() -> Void)?
 
-    init(viewModel: PartySetupView.ViewModel, onComplete: (() -> Void)? = nil) {
+    init(
+        viewModel: PartySetupView.ViewModel,
+        startIndex: Int = 0,
+        onComplete: (() -> Void)? = nil
+    ) {
         self.viewModel = viewModel
         self.onComplete = onComplete
+        _i = State(initialValue: startIndex)
     }
 
     // MARK: - Constants

@@ -20,6 +20,7 @@ struct HomeLivePartiesSection: View {
     let parties: [PartySummaryDTO]
     let statusLine: (PartySummaryDTO) -> String
     let isYourTurn: (PartySummaryDTO) -> Bool
+    let onSelect: (PartySummaryDTO) -> Void
 
     // MARK: - Constants
 
@@ -35,7 +36,12 @@ struct HomeLivePartiesSection: View {
             sectionTitle
 
             ForEach(Array(parties.prefix(visibleCount).enumerated()), id: \.element.id) { index, party in
-                row(for: party)
+                Button {
+                    onSelect(party)
+                } label: {
+                    row(for: party)
+                }
+                .buttonStyle(.plain)
 
                 if index < min(parties.count, visibleCount) - 1 {
                     Divider()
@@ -84,6 +90,7 @@ struct HomeLivePartiesSection: View {
                 .foregroundColor(Color.secondary.opacity(0.5))
         }
         .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 
 }
@@ -92,7 +99,8 @@ struct HomeLivePartiesSection: View {
     HomeLivePartiesSection(
         parties: [],
         statusLine: { _ in "3 cards left to swipe" },
-        isYourTurn: { _ in true }
+        isYourTurn: { _ in true },
+        onSelect: { _ in }
     )
     .padding()
     .background(Constants.Colors.background)

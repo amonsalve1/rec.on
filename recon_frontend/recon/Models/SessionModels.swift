@@ -8,7 +8,7 @@
 import Foundation
 
 /// One member of a party, as serialized by the backend's member_dict.
-struct ParticipantDTO: Codable, Identifiable, Sendable {
+struct ParticipantDTO: Codable, Identifiable, Sendable, Hashable {
     let userId: Int
     let username: String?
     let displayName: String?
@@ -62,8 +62,8 @@ struct SessionEnvelope: Codable, Sendable {
 
 /// A live party as it appears in the caller's list, with the viewer's own
 /// progress attached so the home screen can say whose turn it is.
-struct PartySummaryDTO: Codable, Sendable, Identifiable {
-    struct Viewer: Codable, Sendable {
+struct PartySummaryDTO: Codable, Sendable, Identifiable, Hashable {
+    struct Viewer: Codable, Sendable, Hashable {
         let swipedCount: Int
         let hasPicked: Bool
 

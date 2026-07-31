@@ -21,6 +21,7 @@ struct HomeView: View {
 
     @State private var soloTopic: String?
     @State private var partyTopic: String?
+    @State private var resumingParty: PartySummaryDTO?
 
     // MARK: - Constants
 
@@ -68,6 +69,9 @@ struct HomeView: View {
             .navigationDestination(item: $partyTopic) { topic in
                 PartySetupView(presetTopic: topic)
             }
+            .navigationDestination(item: $resumingParty) { party in
+                PartyResumeView(summary: party)
+            }
             .task {
                 viewModel.refresh()
             }
@@ -98,7 +102,10 @@ struct HomeView: View {
                         HomeLivePartiesSection(
                             parties: viewModel.liveParties,
                             statusLine: viewModel.statusLine,
-                            isYourTurn: viewModel.isYourTurn
+                            isYourTurn: viewModel.isYourTurn,
+                            onSelect: { party in
+                                resumingParty = party
+                            }
                         )
                     }
 

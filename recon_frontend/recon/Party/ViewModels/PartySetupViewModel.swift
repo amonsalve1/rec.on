@@ -331,6 +331,89 @@ extension PartySetupView {
             refreshParticipants()
         }
 
+        /// Where a resumed party should drop the member back in.
+        enum Resume {
+            case lobby
+            case swiping(startIndex: Int)
+            case pick
+            case waiting
+        }
+
+        /// Loads an existing party and works out how far this member got, so
+        /// tapping it on home lands on the screen they left rather than the
+        /// start of the flow. The summary comes from the home list, which
+        /// already knows whether this member has picked.
+        func resume(summary: PartySummaryDTO, completion: @escaping (Resume?) -> Void) {
+            isLoading = true
+            errorMessage = nil
+            hasSubmittedFinalPick = summary.viewer.hasPicked
+
+            api.getSession(sessionId: summary.id) { result in
+                DispatchQueue.main.async {
+                    guard case .success(let session) = result else {
+                        self.isLoading = false
+                        self.errorMessage = "Couldn't open that party"
+                        completion(nil)
+                        return
+                    }
+
+                    self.session = session
+                    self.participants = session.members
+
+                    guard session.state != "lobby" else {
+                        self.isLoading = false
+                        completion(.lobby)
+                        return
+                    }
+
+                    self.loadOptions { loaded in
+                        guard loaded else {
+                            completion(nil)
+                            return
+                        }
+                        self.restoreProgress(completion: completion)
+                    }
+                }
+            }
+        }
+
+        /// Replays this member's swipes and picks onto the freshly loaded
+        /// deck to find their place in it.
+        private func restoreProgress(completion: @escaping (Resume?) -> Void) {
+            guard let sessionId = session?.id else {
+                completion(nil)
+                return
+            }
+
+            api.getMySwipes(sessionId: sessionId) { result in
+                DispatchQueue.main.async {
+                    let swipes = (try? result.get()) ?? []
+                    let swipedIds = Set(swipes.map(\.option_id))
+                    let likedIds = Set(swipes.filter(\.liked).map(\.option_id))
+
+                    self.liked = self.candidates.filter { candidate in
+                        guard let id = self.candidateIdToOptionId[candidate.id] else { return false }
+                        return likedIds.contains(id)
+                    }
+                    self.likedOptions = self.liked
+
+                    let nextIndex = self.candidates.firstIndex { candidate in
+                        guard let id = self.candidateIdToOptionId[candidate.id] else { return true }
+                        return !swipedIds.contains(id)
+                    }
+
+                    if let nextIndex {
+                        completion(.swiping(startIndex: nextIndex))
+                        return
+                    }
+
+                    self.refreshFinalPicks {
+                        completion(self.hasSubmittedFinalPick ? .waiting : .pick)
+                    }
+                }
+            }
+        }
+
         /// Joins an existing party by invite code and loads its options.
         func joinParty(code: String, completion: @escaping (Bool) -> Void) {
             isLoading = true
