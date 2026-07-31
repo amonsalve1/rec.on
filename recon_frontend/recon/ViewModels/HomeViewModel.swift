@@ -16,6 +16,10 @@ extension HomeView {
         let id: String
         let title: String
         let systemImage: String
+
+        /// Bundled artwork for the home card. All three are CC0 photographs
+        /// from Wikimedia Commons; see docs/credits.md.
+        let imageName: String
     }
 
     /// The ViewModel for the Home page view.
@@ -35,9 +39,24 @@ extension HomeView {
         @Published var pendingTopic: Topic?
 
         let topics: [Topic] = [
-            Topic(id: "food", title: "Food nearby", systemImage: "fork.knife"),
-            Topic(id: "study", title: "Study spots", systemImage: "books.vertical"),
-            Topic(id: "movie", title: "Movies", systemImage: "film")
+            Topic(
+                id: "food",
+                title: "Food nearby",
+                systemImage: "fork.knife",
+                imageName: "TopicFood"
+            ),
+            Topic(
+                id: "study",
+                title: "Study spots",
+                systemImage: "books.vertical",
+                imageName: "TopicStudy"
+            ),
+            Topic(
+                id: "movie",
+                title: "Movies",
+                systemImage: "film",
+                imageName: "TopicMovie"
+            )
         ]
 
         private var bag = Set<AnyCancellable>()
