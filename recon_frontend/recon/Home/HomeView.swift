@@ -95,7 +95,11 @@ struct HomeView: View {
                     )
                     .padding(.horizontal, 24)
 
-                    HomeTopicsSection(topics: viewModel.topics) { topic in
+                    HomeTopicsSection(
+                        topics: viewModel.topics,
+                        nearby: viewModel.nearbyPreview,
+                        nearbyCount: viewModel.nearbyCount
+                    ) { topic in
                         viewModel.pendingTopic = topic
                     }
 

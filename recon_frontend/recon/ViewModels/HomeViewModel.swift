@@ -6,6 +6,7 @@
 //
 
 import Combine
+import CoreLocation
 import Foundation
 
 extension HomeView {
@@ -34,6 +35,10 @@ extension HomeView {
         @Published var showEditProfile = false
         @Published var recentPicks: [FinalPick] = []
         @Published private(set) var liveParties: [PartySummaryDTO] = []
+
+        /// A real nearby place for the food card, once location is known.
+        @Published private(set) var nearbyPreview: PlacePreviewDTO?
+        @Published private(set) var nearbyCount: Int = 0
 
         /// The topic the user tapped, awaiting a solo-or-party choice.
         @Published var pendingTopic: Topic?
@@ -87,6 +92,31 @@ extension HomeView {
         func refresh() {
             loadRecentPicks()
             loadLiveParties()
+            loadNearbyPreview()
+        }
+
+        /// Asks the server what is nearby, but only when location has already
+        /// been granted elsewhere in the app. Home must never be the screen
+        /// that triggers the permission prompt.
+        func loadNearbyPreview() {
+            let status = LocationService.shared.authorizationStatus
+            guard status == .authorizedWhenInUse || status == .authorizedAlways else { return }
+
+            LocationService.shared.getCurrentLocation { [weak self] result in
+                guard let location = try? result.get() else { return }
+
+                RecOnAPI.shared.previewNearby(
+                    lat: location.coordinate.latitude,
+                    lon: location.coordinate.longitude
+                ) { preview in
+                    DispatchQueue.main.async {
+                        if case .success(let envelope) = preview {
+                            self?.nearbyPreview = envelope.place
+                            self?.nearbyCount = envelope.count
+                        }
+                    }
+                }
+            }
         }
 
         /// Fetches the parties this user is still part of.

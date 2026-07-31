@@ -15,6 +15,12 @@ struct HomeTopicsSection: View {
     // MARK: - Properties
 
     let topics: [HomeView.Topic]
+
+    /// A real nearby place, when the app already knows where we are. The
+    /// food card advertises it instead of the bundled photo.
+    var nearby: PlacePreviewDTO?
+    var nearbyCount: Int = 0
+
     let onSelect: (HomeView.Topic) -> Void
 
     // MARK: - Constants
@@ -47,9 +53,7 @@ struct HomeTopicsSection: View {
 
     private func card(for topic: HomeView.Topic) -> some View {
         ZStack(alignment: .bottomLeading) {
-            Image(topic.imageName)
-                .resizable()
-                .scaledToFill()
+            artwork(for: topic)
                 .frame(width: cardWidth, height: cardHeight)
 
             // brand tint over the photo, deepening toward the caption so the
@@ -88,6 +92,34 @@ struct HomeTopicsSection: View {
         .shadow(color: shadowTint(for: topic), radius: 12, x: 0, y: 6)
     }
 
+    /// The food card shows a real place's photo once one is known; the
+    /// bundled image covers every other case, including the load.
+    @ViewBuilder
+    private func artwork(for topic: HomeView.Topic) -> some View {
+        if topic.id == "food",
+           let urlString = nearby?.image_url,
+           let url = URL(string: urlString) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                default:
+                    bundledArt(for: topic)
+                }
+            }
+        } else {
+            bundledArt(for: topic)
+        }
+    }
+
+    private func bundledArt(for topic: HomeView.Topic) -> some View {
+        Image(topic.imageName)
+            .resizable()
+            .scaledToFill()
+    }
+
     // MARK: - Helpers
 
     /// Each photo gets its own tint so the three cards stay distinguishable
@@ -112,6 +144,10 @@ struct HomeTopicsSection: View {
     private func subtitle(for topic: HomeView.Topic) -> String {
         switch topic.id {
         case "food":
+            // name the place on the card once we actually know one
+            if let name = nearby?.name {
+                return nearbyCount > 1 ? "\(name) + \(nearbyCount - 1) more" : name
+            }
             return "Places near you"
         case "study":
             return "Somewhere to sit"

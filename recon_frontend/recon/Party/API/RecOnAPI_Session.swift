@@ -32,6 +32,29 @@ extension RecOnAPI {
         }
     }
 
+    /// One real nearby place plus how many are around, for the home card.
+    func previewNearby(lat: Double, lon: Double, completion: @escaping @Sendable (Result<PlacePreviewEnvelope, Error>) -> Void) {
+        guard !APIConfig.authToken.isEmpty else {
+            completion(.failure(RecOnAPIError.noData))
+            return
+        }
+
+        let url = endpoint("parties/preview")
+        session.request(url, parameters: ["lat": lat, "lon": lon], headers: headers)
+        .responseData { response in
+            let statusCode = response.response?.statusCode ?? -1
+
+            if (200..<300).contains(statusCode), let data = response.data,
+               let envelope = try? JSONDecoder().decode(PlacePreviewEnvelope.self, from: data) {
+                completion(.success(envelope))
+            } else {
+                self.handleTokenRefresh(statusCode: statusCode, errorData: response.data, retry: {
+                    self.previewNearby(lat: lat, lon: lon, completion: completion)
+                }, completion: completion)
+            }
+        }
+    }
+
     /// The caller's live parties, for the home screen.
     func listParties(completion: @escaping @Sendable (Result<[PartySummaryDTO], Error>) -> Void) {
         guard !APIConfig.authToken.isEmpty else {

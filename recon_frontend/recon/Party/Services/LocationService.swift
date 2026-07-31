@@ -21,6 +21,10 @@ class LocationService: NSObject, ObservableObject {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        // seed from the manager: callers that only read this property would
+        // otherwise see notDetermined until the first delegate callback, and
+        // conclude permission was never granted
+        authorizationStatus = locationManager.authorizationStatus
     }
     
     func requestLocationPermission() {

@@ -95,6 +95,19 @@ struct PartyListEnvelope: Codable, Sendable {
     let parties: [PartySummaryDTO]
 }
 
+/// A real nearby place, shown on the home screen's food card so it advertises
+/// what is actually around rather than stock photography.
+struct PlacePreviewDTO: Codable, Sendable {
+    let name: String
+    let image_url: String?
+    let address: String?
+}
+
+struct PlacePreviewEnvelope: Codable, Sendable {
+    let place: PlacePreviewDTO?
+    let count: Int
+}
+
 struct OptionsEnvelope: Codable, Sendable {
     let options: [OptionDTO]
 }
