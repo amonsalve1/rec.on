@@ -93,6 +93,7 @@ struct HomeView: View {
                             }
                         }
                     )
+                    .padding(.horizontal, 24)
 
                     HomeTopicsSection(topics: viewModel.topics) { topic in
                         viewModel.pendingTopic = topic
@@ -113,7 +114,6 @@ struct HomeView: View {
                         viewModel.showProfileFromPicks = true
                     }
                 }
-                .padding(.horizontal, 24)
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }

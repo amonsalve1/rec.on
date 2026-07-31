@@ -7,12 +7,9 @@
 
 import SwiftUI
 
-/// The parties this member is still part of, with whose turn it is. Without
-/// this the home screen cannot tell anyone that a friend is waiting on them.
-///
-/// Drawn as quiet rows rather than cards: the topic list above is the loud
-/// thing on this screen, and only a party actually waiting on you gets an
-/// accent.
+/// The parties this member is still part of. Each carries a ring showing how
+/// far through the deck they are, so progress is something you see rather
+/// than read.
 struct HomeLivePartiesSection: View {
 
     // MARK: - Properties
@@ -27,70 +24,108 @@ struct HomeLivePartiesSection: View {
     /// Home is a glance, not an inbox.
     private let visibleCount = 3
 
-    private let dotSize: CGFloat = 7
+    private let ringSize: CGFloat = 42
 
     // MARK: - UI
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionTitle
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Happening now")
+                .font(Constants.Fonts.caption)
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .padding(.horizontal, 24)
 
-            ForEach(Array(parties.prefix(visibleCount).enumerated()), id: \.element.id) { index, party in
-                Button {
-                    onSelect(party)
-                } label: {
-                    row(for: party)
-                }
-                .buttonStyle(.plain)
-
-                if index < min(parties.count, visibleCount) - 1 {
-                    Divider()
-                        .padding(.leading, 20)
+            VStack(spacing: 10) {
+                ForEach(parties.prefix(visibleCount)) { party in
+                    Button {
+                        onSelect(party)
+                    } label: {
+                        card(for: party)
+                    }
+                    .buttonStyle(PressableCard())
                 }
             }
+            .padding(.horizontal, 24)
         }
-    }
-
-    private var sectionTitle: some View {
-        Text("Happening now")
-            .font(Constants.Fonts.caption)
-            .foregroundColor(.secondary)
-            .textCase(.uppercase)
-            .tracking(0.6)
-            .padding(.bottom, 10)
     }
 
     // MARK: - Supporting
 
-    private func row(for party: PartySummaryDTO) -> some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(
-                    isYourTurn(party)
-                        ? Constants.Colors.orangePrimary
-                        : Color.secondary.opacity(0.3)
-                )
-                .frame(width: dotSize, height: dotSize)
+    private func card(for party: PartySummaryDTO) -> some View {
+        HStack(spacing: 14) {
+            progressRing(for: party)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(party.title)
-                    .font(Constants.Fonts.body)
+                    .font(Constants.Fonts.bodySemibold)
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text(statusLine(party))
-                    .font(Constants.Fonts.caption)
+                    .font(Constants.Fonts.label)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
 
+            if isYourTurn(party) {
+                Text("your turn")
+                    .font(Constants.Fonts.caption)
+                    .foregroundColor(Constants.Colors.orangePrimary)
+            }
+
             Image(systemName: "chevron.right")
                 .font(Constants.Fonts.caption)
-                .foregroundColor(Color.secondary.opacity(0.5))
+                .foregroundColor(Color.secondary.opacity(0.4))
         }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
+    }
+
+    private func progressRing(for party: PartySummaryDTO) -> some View {
+        ZStack {
+            Circle()
+                .stroke(Constants.Colors.orangePrimary.opacity(0.15), lineWidth: 4)
+
+            Circle()
+                .trim(from: 0, to: fraction(for: party))
+                .stroke(
+                    Constants.Colors.orangePrimary,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            Image(systemName: glyph(for: party))
+                .font(Constants.Fonts.body)
+                .foregroundColor(Constants.Colors.ink.opacity(0.7))
+        }
+        .frame(width: ringSize, height: ringSize)
+    }
+
+    // MARK: - Helpers
+
+    /// How far this member is through the deck, 0 when the party is still in
+    /// its lobby.
+    private func fraction(for party: PartySummaryDTO) -> CGFloat {
+        guard party.optionCount > 0, party.state != "lobby" else { return 0 }
+        return min(CGFloat(party.viewer.swipedCount) / CGFloat(party.optionCount), 1)
+    }
+
+    /// The party's topic, so a glance at the ring says what it is about.
+    private func glyph(for party: PartySummaryDTO) -> String {
+        switch party.topic {
+        case "restaurant":
+            return "fork.knife"
+        case "activity":
+            return "books.vertical"
+        default:
+            return "film"
+        }
     }
 
 }
@@ -102,6 +137,6 @@ struct HomeLivePartiesSection: View {
         isYourTurn: { _ in true },
         onSelect: { _ in }
     )
-    .padding()
+    .padding(.vertical)
     .background(Constants.Colors.background)
 }
