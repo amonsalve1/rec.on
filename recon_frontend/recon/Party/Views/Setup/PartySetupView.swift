@@ -56,7 +56,9 @@ struct PartySetupView: View {
         .onReceive(NotificationCenter.default.publisher(for: .sessionFinished)) { _ in
             navSwipe = false
             onComplete?()
-            dismiss()
+            DispatchQueue.main.async {
+                dismiss()
+            }
         }
     }
 

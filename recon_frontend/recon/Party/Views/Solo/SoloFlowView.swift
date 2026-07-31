@@ -40,9 +40,12 @@ struct SoloFlowView: View {
             SwipeSoloView(viewModel: viewModel)
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionFinished)) { _ in
-            // collapse the pushed stack, then leave the flow entirely
+            // collapse the pushed stack first; dismissing this root in the
+            // same frame gets swallowed, so it waits one runloop turn
             navSwipe = false
-            dismiss()
+            DispatchQueue.main.async {
+                dismiss()
+            }
         }
         .navigationTitle("Solo")
         .navigationBarTitleDisplayMode(.inline)
