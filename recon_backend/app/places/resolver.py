@@ -108,4 +108,5 @@ def resolve(*, topic, lat=None, lon=None, radius_m=2000, limit=DEFAULT_LIMIT):
         except ProviderUnavailable as err:
             log.warning("overpass unavailable, falling back to seed: %s", err)
 
-    return SeedProvider().search(topic=topic, limit=limit), SeedProvider.name
+    # seeds carry wikidata ids too, so the fallback deck gets artwork as well
+    return fill_images(SeedProvider().search(topic=topic, limit=limit)), SeedProvider.name
