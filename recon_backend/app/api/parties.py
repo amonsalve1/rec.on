@@ -1,10 +1,11 @@
 from datetime import timedelta
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import func
 
 from ..errors import BadRequest, Conflict, ServiceUnavailable, Unprocessable
 from ..extensions import db, limiter
-from ..models import Option, Party, PartyMember
+from ..models import FinalPick, Option, Party, PartyMember, Swipe
 from ..models.party import MIN_OPTIONS, TOPICS
 from ..places import ProviderUnavailable
 from ..places.resolver import resolve
@@ -17,6 +18,7 @@ bp = Blueprint("parties", __name__)
 
 SWIPE_WINDOW = timedelta(hours=24)
 COORD_PLACES = 3  # ~110m. rounded before it is ever persisted.
+LIST_LIMIT = 10
 
 
 def snap(value):
@@ -108,6 +110,58 @@ def create():
     db.session.commit()
 
     return jsonify(party=party_dict(party)), 201
+
+
+@bp.get("")
+@require_auth
+def mine():
+    """The caller's parties that are still live, freshest first.
+
+    Carries a per-viewer block so the client can say "your turn" without a
+    round trip per party: how many options this caller has swiped, and
+    whether they have submitted their final pick.
+    """
+    user = current_user()
+    rows = (
+        Party.query.join(PartyMember, PartyMember.party_id == Party.id)
+        .filter(
+            PartyMember.user_id == user.id,
+            PartyMember.status == "active",
+            Party.state.in_(("lobby", "swiping")),
+        )
+        .order_by(Party.updated_at.desc())
+        .limit(LIST_LIMIT)
+        .all()
+    )
+    if not rows:
+        return jsonify(parties=[])
+
+    party_ids = [p.id for p in rows]
+    swiped = dict(
+        db.session.query(Swipe.party_id, func.count())
+        .filter(Swipe.party_id.in_(party_ids), Swipe.user_id == user.id)
+        .group_by(Swipe.party_id)
+        .all()
+    )
+    picked = {
+        row[0]
+        for row in db.session.query(FinalPick.party_id)
+        .filter(FinalPick.party_id.in_(party_ids), FinalPick.user_id == user.id)
+        .all()
+    }
+
+    return jsonify(
+        parties=[
+            dict(
+                party_dict(party),
+                viewer={
+                    "swiped_count": swiped.get(party.id, 0),
+                    "has_picked": party.id in picked,
+                },
+            )
+            for party in rows
+        ]
+    )
 
 
 @bp.get("/<public_id>")
