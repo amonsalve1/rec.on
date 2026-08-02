@@ -26,28 +26,32 @@ struct OptionArtwork: View {
 
     // MARK: - UI
 
+    /// The gradient sizes the view and the picture rides on top of it as an
+    /// overlay. Put the picture in the layout instead and an aspect-fill photo
+    /// reports the width its height implies — wider than the card — and drags
+    /// the whole card past its own padding the moment the image lands.
+    /// `.clipped()` does not save you there: it trims drawing, not layout.
     var body: some View {
-        ZStack {
-            tint
-
-            if let url = resolvedURL {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure, .empty:
-                        initial
-                    @unknown default:
-                        initial
+        tint
+            .overlay {
+                if let url = resolvedURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        case .failure, .empty:
+                            initial
+                        @unknown default:
+                            initial
+                        }
                     }
+                } else {
+                    initial
                 }
-            } else {
-                initial
             }
-        }
-        .clipped()
+            .clipped()
     }
 
     private var tint: some View {
