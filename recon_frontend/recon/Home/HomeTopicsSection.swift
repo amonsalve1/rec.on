@@ -16,8 +16,8 @@ struct HomeTopicsSection: View {
 
     let topics: [HomeView.Topic]
 
-    /// A real nearby place, when the app already knows where we are. The
-    /// food card advertises it instead of the bundled photo.
+    /// A real nearby place, when the app already knows where we are. Only
+    /// its name is used: the card is drawn, not photographed.
     var nearby: PlacePreviewDTO?
     var nearbyCount: Int = 0
 
@@ -53,20 +53,14 @@ struct HomeTopicsSection: View {
 
     private func card(for topic: HomeView.Topic) -> some View {
         ZStack(alignment: .bottomLeading) {
-            artwork(for: topic)
-                .frame(width: cardWidth, height: cardHeight)
+            RoundedRectangle(cornerRadius: corner)
+                .fill(gradient(for: topic))
 
-            // brand tint over the photo, deepening toward the caption so the
-            // type stays legible whatever the picture is doing
-            LinearGradient(
-                colors: [
-                    tint(for: topic).opacity(0.15),
-                    tint(for: topic).opacity(0.55),
-                    Constants.Colors.ink.opacity(0.85)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // oversized glyph bleeding off the corner, as texture
+            Image(systemName: topic.systemImage)
+                .font(.system(size: 96, weight: .semibold))
+                .foregroundColor(.white.opacity(0.16))
+                .offset(x: 58, y: -46)
 
             VStack(alignment: .leading, spacing: 5) {
                 Image(systemName: topic.systemImage)
@@ -92,47 +86,20 @@ struct HomeTopicsSection: View {
         .shadow(color: shadowTint(for: topic), radius: 12, x: 0, y: 6)
     }
 
-    /// The food card shows a real place's photo once one is known; the
-    /// bundled image covers every other case, including the load.
-    @ViewBuilder
-    private func artwork(for topic: HomeView.Topic) -> some View {
-        if topic.id == "food",
-           let urlString = nearby?.image_url,
-           let url = URL(string: urlString) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                default:
-                    bundledArt(for: topic)
-                }
-            }
-        } else {
-            bundledArt(for: topic)
-        }
-    }
-
-    private func bundledArt(for topic: HomeView.Topic) -> some View {
-        Image(topic.imageName)
-            .resizable()
-            .scaledToFill()
-    }
-
     // MARK: - Helpers
 
-    /// Each photo gets its own tint so the three cards stay distinguishable
-    /// while sharing one treatment.
-    private func tint(for topic: HomeView.Topic) -> Color {
+    private func gradient(for topic: HomeView.Topic) -> LinearGradient {
+        let stops: [Color]
         switch topic.id {
         case "food":
-            return Constants.Colors.orangePrimary
+            stops = [Constants.Colors.orangeLight, Constants.Colors.orangePrimary]
         case "study":
-            return Constants.Colors.amber
+            stops = [Constants.Colors.amber, Constants.Colors.orangeLight]
         default:
-            return Constants.Colors.surfaceDark
+            // movies get the dark card, which anchors the warm palette
+            stops = [Constants.Colors.surfaceDark, Constants.Colors.ink]
         }
+        return LinearGradient(colors: stops, startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     private func shadowTint(for topic: HomeView.Topic) -> Color {
@@ -172,9 +139,9 @@ struct PressableCard: ButtonStyle {
 #Preview {
     HomeTopicsSection(
         topics: [
-            .init(id: "food", title: "Food nearby", systemImage: "fork.knife", imageName: "TopicFood"),
-            .init(id: "study", title: "Study spots", systemImage: "books.vertical", imageName: "TopicStudy"),
-            .init(id: "movie", title: "Movies", systemImage: "film", imageName: "TopicMovie")
+            .init(id: "food", title: "Food nearby", systemImage: "fork.knife"),
+            .init(id: "study", title: "Study spots", systemImage: "books.vertical"),
+            .init(id: "movie", title: "Movies", systemImage: "film")
         ],
         onSelect: { _ in }
     )

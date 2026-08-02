@@ -1,22 +1,14 @@
 # Image credits
 
-Bundled artwork for the home topic cards. All three are CC0 (public domain
-dedication) from Wikimedia Commons, so no attribution is legally required —
-recorded here anyway so the provenance is traceable and the licence can be
-re-checked before any store release.
+The app bundles no photography. Home's topic cards are drawn from the
+palette in `recon_frontend/recon/Utils/Constants.swift`, and option artwork
+falls back to a lettered card when no picture exists.
 
-| Asset | Source file (Wikimedia Commons) | Licence |
-|---|---|---|
-| `TopicFood` | Pepperoni and mushroom pizza - Massachusetts.jpg | CC0 |
-| `TopicStudy` | Coffee in Montreal (Unsplash).jpg | CC0 |
-| `TopicMovie` | Kalee projectors at the Cinema Museum, London.jpg | CC0 |
+Pictures that do appear are fetched at runtime and never redistributed with
+the app: an option's image comes from its OpenStreetMap `image` or
+`wikimedia_commons` tag, or from its Wikidata P18 image, resolved through
+`recon_backend/app/places/wikimedia.py` and served as a Wikimedia Commons
+`Special:FilePath` URL. Those files carry their own licences on Commons.
 
-Each was downscaled to 600x780 and cropped to portrait for the card frame.
-The movie image is cropped up from the bottom so the museum signage in the
-original is out of frame.
-
-Option artwork inside the app is not bundled: it is resolved at runtime from
-the option's OpenStreetMap `image`/`wikimedia_commons` tag, or from its
-Wikidata P18 image, and served through the backend
-(`recon_backend/app/places/wikimedia.py`). Those images carry their own
-licences on Commons.
+If bundled artwork is ever added, record the source file and licence here,
+and prefer CC0 or public domain so no attribution is required in-app.

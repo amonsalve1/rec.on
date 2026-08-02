@@ -79,7 +79,7 @@ struct HomeStartSheet: View {
 
 #Preview {
     HomeStartSheet(
-        topic: .init(id: "food", title: "Food nearby", systemImage: "fork.knife", imageName: "TopicFood"),
+        topic: .init(id: "food", title: "Food nearby", systemImage: "fork.knife"),
         onSolo: {},
         onParty: {}
     )

@@ -18,9 +18,6 @@ extension HomeView {
         let title: String
         let systemImage: String
 
-        /// Bundled artwork for the home card. All three are CC0 photographs
-        /// from Wikimedia Commons; see docs/credits.md.
-        let imageName: String
     }
 
     /// The ViewModel for the Home page view.
@@ -47,20 +44,17 @@ extension HomeView {
             Topic(
                 id: "food",
                 title: "Food nearby",
-                systemImage: "fork.knife",
-                imageName: "TopicFood"
+                systemImage: "fork.knife"
             ),
             Topic(
                 id: "study",
                 title: "Study spots",
-                systemImage: "books.vertical",
-                imageName: "TopicStudy"
+                systemImage: "books.vertical"
             ),
             Topic(
                 id: "movie",
                 title: "Movies",
-                systemImage: "film",
-                imageName: "TopicMovie"
+                systemImage: "film"
             )
         ]
 
