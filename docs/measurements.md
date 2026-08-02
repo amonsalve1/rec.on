@@ -32,6 +32,30 @@ scoping). At `-c 50` against 8 server threads, most of the wall-clock p50 is
 queueing; the per-request in-process time is ~8 ms (see profile), which is
 why a 3-query cut moves throughput 22% but not 3×.
 
+### Re-measured 2026-08-02
+
+Repeated on a freshly seeded bench database after the party-list and
+nearby-preview endpoints landed. `app/api/picks.py` itself is unchanged
+since the optimization above, so this is a regression check rather than a
+new result — the extra routes and blueprints cost the endpoint nothing.
+
+Three consecutive runs, same command:
+
+| run | p50 | p95 | p99 | throughput |
+|---|---|---|---|---|
+| 1 | 60 ms | 113 ms | 135 ms | 755 req/s |
+| 2 | 64 ms | 114 ms | 125 ms | 783 req/s |
+| 3 | 57 ms | 74 ms | 79 ms | 857 req/s |
+
+Run-to-run spread is wider than the improvement being claimed at the tail
+(p95 varies 74–114 ms across identical runs on an unloaded laptop), which is
+the honest caveat on the −11% p95 above: p50 and throughput are the stable
+signals here, and both hold. Nothing regressed.
+
+Profile at the same time: **5.7 ms/request in-process, 4.0 queries/request,
+49% of time in `psycopg` wait** — the query-count cut is still in place and
+round-trip wait is still the dominant cost.
+
 ## Query plans (`EXPLAIN ANALYZE`)
 
 **Approval aggregate, before any change** — planner uses the existing
@@ -57,7 +81,12 @@ planner ignores would be resume theater.
 
 ```
 Execution Time: 0.493 ms   (one statement replacing three at ~0.4 ms each + members load)
+Execution Time: 0.506 ms   (re-measured 2026-08-02, fresh bench database)
 ```
+
+Planning time for this statement is ~2.9 ms on a cold plan cache, roughly
+six times its execution time — a reminder that at this data size the work is
+in getting to the database, not in the query.
 
 ## Python profile (`cProfile`, 50 requests through the test client)
 
