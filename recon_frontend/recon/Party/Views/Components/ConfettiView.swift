@@ -9,11 +9,12 @@ import SwiftUI
 
 /// A full-screen, non-interactive confetti burst.
 ///
-/// Paper does four things that a straight downward tween does not: it drifts
-/// sideways, tumbles continuously rather than settling on one angle, flips
-/// edge-on so it seems to disappear and return, and reaches a terminal speed
-/// after a short acceleration. Each piece animates those on separate
-/// keyframe tracks, so no two fall alike.
+/// Paper does four things a straight downward tween does not: it drifts
+/// sideways, tumbles as it goes, turns edge-on so it seems to vanish and come
+/// back, and reaches a terminal speed after a short acceleration. Every piece
+/// is drawn from elapsed time rather than animated, so a redraw of the page
+/// behind it — the winner's photo finishing its download, say — cannot leave
+/// the fall stranded half way down.
 struct ConfettiView: View {
 
     // MARK: - Properties
@@ -21,6 +22,8 @@ struct ConfettiView: View {
     let isActive: Bool
 
     @State private var pieces: [Piece] = []
+    @State private var start = Date.distantFuture
+    @State private var finished = false
 
     // MARK: - Constants
 
@@ -30,27 +33,88 @@ struct ConfettiView: View {
 
     var body: some View {
         GeometryReader { geo in
-            ZStack {
-                ForEach(pieces) { piece in
-                    PieceView(piece: piece, fallHeight: geo.size.height + 120)
-                }
-            }
-            .onChange(of: isActive, initial: true) { _, active in
-                // built only when the burst fires, so the pieces are not
-                // sitting off-screen mid-fall before the winner is revealed
-                if active, pieces.isEmpty {
-                    pieces = Self.makePieces(count: pieceCount, width: geo.size.width)
+            if !finished {
+                TimelineView(.animation) { context in
+                    let elapsed = context.date.timeIntervalSince(start)
+
+                    ZStack {
+                        ForEach(pieces) { piece in
+                            view(for: piece, at: elapsed, in: geo.size)
+                        }
+                    }
                 }
             }
         }
         .allowsHitTesting(false)
+        .onChange(of: isActive, initial: true) { _, active in
+            // built only when the burst fires, so the pieces are not sitting
+            // off-screen mid-fall before the winner is revealed
+            guard active, pieces.isEmpty else { return }
+
+            pieces = Self.makePieces(count: pieceCount)
+            start = .now
+
+            let lifetime = pieces.map { $0.delay + $0.duration }.max() ?? 0
+            Task {
+                try? await Task.sleep(for: .seconds(lifetime + 0.2))
+                finished = true
+            }
+        }
+    }
+
+    // MARK: - Drawing
+
+    /// One piece, placed from elapsed time rather than animated towards a
+    /// target, so there is no in-flight animation for a redraw to strand.
+    @ViewBuilder
+    private func view(for piece: Piece, at elapsed: TimeInterval, in size: CGSize) -> some View {
+        let progress = (elapsed - piece.delay) / piece.duration
+
+        if progress > 0, progress < 1 {
+            let fallHeight = size.height + 140
+            let startY = -piece.startHeight
+            let x = piece.startX * size.width + piece.sway * sin(
+                piece.swayTurns * 2 * .pi * progress + piece.swayPhase
+            )
+            let y = startY + (fallHeight - startY) * Self.fallCurve(progress)
+            // an edge-on flip reads as the piece narrowing to nothing and
+            // opening back up, which is its width scaled by the cosine of
+            // the turn
+            let flip = abs(cos(piece.flipTurns * 2 * .pi * progress))
+
+            shape(for: piece)
+                .frame(width: piece.size.width, height: piece.size.height)
+                .rotationEffect(.degrees(piece.spinTurns * 360 * progress))
+                .scaleEffect(x: max(flip, 0.05), y: 1)
+                .opacity(progress < 0.8 ? 1 : (1 - progress) / 0.2)
+                .position(x: x, y: y)
+        }
+    }
+
+    @ViewBuilder
+    private func shape(for piece: Piece) -> some View {
+        if piece.isRound {
+            Circle().fill(piece.color)
+        } else {
+            RoundedRectangle(cornerRadius: 2).fill(piece.color)
+        }
     }
 
     // MARK: - Helpers
 
-    /// Builds the pieces once. Randomising inside `body` would reshuffle
-    /// every piece on each redraw and make the fall stutter.
-    static func makePieces(count: Int, width: CGFloat) -> [Piece] {
+    /// Fraction of the fall covered by `progress`: a short acceleration, then
+    /// the constant terminal speed that paper actually settles into.
+    private static func fallCurve(_ progress: Double) -> Double {
+        let ramp = 0.3
+        let travelled = progress < ramp
+            ? 0.5 * progress * progress / ramp
+            : 0.5 * ramp + (progress - ramp)
+        return travelled / (0.5 * ramp + (1 - ramp))
+    }
+
+    /// Builds the pieces once. Randomising per frame would reshuffle every
+    /// piece on each redraw and turn the fall into static.
+    static func makePieces(count: Int) -> [Piece] {
         let palette: [Color] = [
             Constants.Colors.orangePrimary,
             Constants.Colors.orangeLight,
@@ -61,22 +125,21 @@ struct ConfettiView: View {
         ]
 
         return (0..<count).map { index in
-            let pieceWidth = CGFloat.random(in: 5...11)
+            let width = CGFloat.random(in: 5...11)
 
             return Piece(
                 id: index,
                 color: palette.randomElement() ?? Constants.Colors.orangePrimary,
-                size: CGSize(
-                    width: pieceWidth,
-                    height: pieceWidth * CGFloat.random(in: 1.2...2.2)
-                ),
+                size: CGSize(width: width, height: width * CGFloat.random(in: 1.2...2.2)),
                 isRound: Double.random(in: 0...1) < 0.25,
-                startX: CGFloat.random(in: -20...(width + 20)),
-                startY: CGFloat.random(in: -160 ... -30),
+                startX: Double.random(in: -0.05...1.05),
+                startHeight: CGFloat.random(in: 30...200),
                 sway: CGFloat.random(in: 18...70) * (Bool.random() ? 1 : -1),
-                spin: Double.random(in: 360...1080) * (Bool.random() ? 1 : -1),
-                flip: Double.random(in: 540...1440) * (Bool.random() ? 1 : -1),
-                duration: Double.random(in: 2.4...4.2),
+                swayTurns: Double.random(in: 0.75...1.75),
+                swayPhase: Double.random(in: 0...(2 * .pi)),
+                spinTurns: Double.random(in: 1...3) * (Bool.random() ? 1 : -1),
+                flipTurns: Double.random(in: 1.5...4),
+                duration: Double.random(in: 2.6...4.4),
                 delay: Double.random(in: 0...0.9)
             )
         }
@@ -88,93 +151,21 @@ struct ConfettiView: View {
         let color: Color
         let size: CGSize
         let isRound: Bool
-        let startX: CGFloat
-        let startY: CGFloat
+        /// Horizontal start as a fraction of the width, so the burst does not
+        /// depend on the size the view happened to be built at.
+        let startX: Double
+        /// How far above the top edge the piece begins.
+        let startHeight: CGFloat
         /// Horizontal travel of the sway, in points.
         let sway: CGFloat
-        /// Total in-plane rotation over the fall, in degrees.
-        let spin: Double
-        /// Total edge-on flip, in degrees.
-        let flip: Double
+        let swayTurns: Double
+        let swayPhase: Double
+        /// In-plane rotations over the fall.
+        let spinTurns: Double
+        /// Edge-on flips over the fall.
+        let flipTurns: Double
         let duration: Double
         let delay: Double
-    }
-
-}
-
-/// Animatable state for a single piece.
-private struct PieceMotion {
-    var y: CGFloat = 0
-    var drift: CGFloat = 0
-    var spin: Double = 0
-    var flip: Double = 0
-    var opacity: Double = 1
-}
-
-/// Drives one piece through its fall.
-private struct PieceView: View {
-
-    // MARK: - Properties
-
-    let piece: ConfettiView.Piece
-    let fallHeight: CGFloat
-
-    // MARK: - UI
-
-    var body: some View {
-        KeyframeAnimator(initialValue: PieceMotion(y: piece.startY), repeating: false) { motion in
-            shape
-                .frame(width: piece.size.width, height: piece.size.height)
-                .rotationEffect(.degrees(motion.spin))
-                .rotation3DEffect(
-                    .degrees(motion.flip),
-                    axis: (x: 0.35, y: 1, z: 0.15),
-                    perspective: 0.6
-                )
-                .opacity(motion.opacity)
-                .position(x: piece.startX + motion.drift, y: motion.y)
-        } keyframes: { _ in
-            // hold each track through the stagger, then run the fall
-            KeyframeTrack(\.y) {
-                LinearKeyframe(piece.startY, duration: piece.delay)
-                // short acceleration into terminal speed, not a constant slide
-                CubicKeyframe(piece.startY + fallHeight * 0.22, duration: piece.duration * 0.3)
-                LinearKeyframe(fallHeight, duration: piece.duration * 0.7)
-            }
-
-            KeyframeTrack(\.drift) {
-                LinearKeyframe(0, duration: piece.delay)
-                CubicKeyframe(piece.sway, duration: piece.duration * 0.32)
-                CubicKeyframe(-piece.sway * 0.75, duration: piece.duration * 0.36)
-                CubicKeyframe(piece.sway * 0.45, duration: piece.duration * 0.32)
-            }
-
-            KeyframeTrack(\.spin) {
-                LinearKeyframe(0, duration: piece.delay)
-                LinearKeyframe(piece.spin, duration: piece.duration)
-            }
-
-            KeyframeTrack(\.flip) {
-                LinearKeyframe(0, duration: piece.delay)
-                LinearKeyframe(piece.flip, duration: piece.duration)
-            }
-
-            KeyframeTrack(\.opacity) {
-                LinearKeyframe(1, duration: piece.delay)
-                // stays solid on the way down; only fades as it leaves
-                LinearKeyframe(1, duration: piece.duration * 0.8)
-                LinearKeyframe(0, duration: piece.duration * 0.2)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var shape: some View {
-        if piece.isRound {
-            Circle().fill(piece.color)
-        } else {
-            RoundedRectangle(cornerRadius: 2).fill(piece.color)
-        }
     }
 
 }
