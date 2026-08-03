@@ -56,6 +56,39 @@ Profile at the same time: **5.7 ms/request in-process, 4.0 queries/request,
 49% of time in `psycopg` wait** — the query-count cut is still in place and
 round-trip wait is still the dominant cost.
 
+### A/B re-run, 6 alternating reps (2026-08-02)
+
+The numbers at the top of this file were a single before run against a single
+after run, which the run-to-run spread above says is not enough. Redone as an
+alternating A/B: both versions of `results()` are replayed out of git
+(`HEAD` and `71309b3^`), swapped into place one rep at a time, so machine
+drift lands on both halves equally. Each rep measures twice — `-c 1` for the
+per-request service time and `-c 50` for saturated throughput.
+
+| median of 6 | before | after | change |
+|---|---|---|---|
+| serial latency (`-c 1`) | 6.8 ms | 6.7 ms | −0.8% (noise) |
+| throughput (`-c 50`) | 529 req/s | 605 req/s | **+14.4%** |
+| p50 (`-c 50`) | 93 ms | 77 ms | **−17.2%** |
+| p95 (`-c 50`) | 132.5 ms | 118.5 ms | −10.6% |
+
+After won throughput in 6 reps out of 6, so the direction is real even though
+the machine was busier than it was for the original run (which is why both
+columns are slower in absolute terms than the table at the top).
+
+The interesting line is the first one: **at concurrency 1 the two versions are
+the same speed.** Three fewer round trips is worth nothing when nothing is
+queued behind you — the win only appears under load, where holding a pooled
+connection for 7 queries instead of 4 is what actually costs. So the honest
+claim is "+14% throughput and −17% p50 under load", not "the endpoint is
+faster".
+
+One trap worth writing down: the first attempt at this compared the endpoint
+against *itself*. The script snapshotted "after" from the working tree, and a
+previous aborted run had left the tree holding the before version. Six reps of
+a dead heat is what tipped it off. The script now pulls both versions from git
+every run and restores the tree at the end.
+
 ## Query plans (`EXPLAIN ANALYZE`)
 
 **Approval aggregate, before any change** — planner uses the existing
@@ -129,3 +162,19 @@ gunicorn -w 2 --threads 4 -b 127.0.0.1:5001 wsgi:app &
 ab -n 1000 -c 50 -H "Authorization: Bearer <token>" \
    http://127.0.0.1:5001/v1/parties/<party>/results
 ```
+
+For the A/B re-run, one rep is:
+
+```bash
+git show 71309b3^:recon_backend/app/api/picks.py > /tmp/before.py   # 7 queries
+git show HEAD:recon_backend/app/api/picks.py     > /tmp/after.py    # 4 queries
+cp /tmp/before.py recon_backend/app/api/picks.py                    # (then /tmp/after.py)
+# restart gunicorn, wait for /v1/health, then both of:
+ab -n 300  -c 1  -H "Authorization: Bearer <token>" "$URL"   # service time
+ab -n 1000 -c 50 -H "Authorization: Bearer <token>" "$URL"   # under load
+git checkout -- recon_backend/app/api/picks.py
+```
+
+Alternate before/after per rep and take medians. Pull both versions from git,
+never from the working tree — a half-finished run leaves the tree holding the
+wrong one.
