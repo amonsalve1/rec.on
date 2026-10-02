@@ -7,7 +7,11 @@
 
 import SwiftUI
 
-/// The circular back chevron shown at the top of each wizard step.
+/// The back control at the top of each wizard step.
+///
+/// This was a solid disc of system orange with a black chevron, which read as a
+/// primary action sitting above the actual one. Navigation is chrome, so it is
+/// drawn as chrome: the brand colour on a tint, at the weight of a back button.
 struct SignInBackButton: View {
 
     // MARK: - Properties
@@ -18,21 +22,21 @@ struct SignInBackButton: View {
 
     var body: some View {
         HStack {
-            Button {
-                action()
-            } label: {
+            Button(action: action) {
                 Image(systemName: "chevron.left")
                     .font(Constants.Fonts.buttonLabel)
-                    .foregroundColor(.black)
+                    .foregroundColor(Constants.Colors.orangePrimary)
                     .frame(width: 44, height: 44)
-                    .background(Constants.Colors.accent)
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Constants.Colors.orangePrimary.opacity(0.12))
+                    )
             }
-            .padding(.leading, 24)
-            .padding(.top, Constants.Padding.screenHorizontal)
+            .accessibilityLabel("Back")
 
             Spacer()
         }
+        .padding(.horizontal, Constants.Padding.screenHorizontal)
     }
 
 }
@@ -52,45 +56,60 @@ struct SignInStepDots: View {
     var body: some View {
         HStack(spacing: 8) {
             ForEach(0..<total, id: \.self) { index in
-                Circle()
+                Capsule()
                     .fill(
                         index <= activeThrough
-                            ? Constants.Colors.ink
-                            : Color.gray.opacity(0.3)
+                            ? Constants.Colors.orangePrimary
+                            : Constants.Colors.orangePrimary.opacity(0.22)
                     )
-                    .frame(width: 6, height: 6)
+                    /// The reached step widens rather than only darkening, so
+                    /// progress is legible without relying on colour alone.
+                    .frame(width: index == activeThrough ? 20 : 6, height: 6)
             }
         }
-        .padding(.bottom, 50)
+        .animation(.easeOut(duration: 0.2), value: activeThrough)
     }
 
 }
 
-/// The white full-width confirm button used by each wizard step, greyed out
-/// until the step's field has content.
-struct SignInNextButton: View {
+/// A placeholder in the app's secondary ink.
+///
+/// Passed as a field's `prompt:` rather than its title, because a bare title
+/// placeholder is drawn by the system and picked up the app accent — which is
+/// how these read as blue text on a warm orange screen.
+func signInPrompt(_ text: String) -> Text {
+    Text(text)
+        .foregroundColor(Constants.Colors.inkSecondary)
+}
+
+/// A text field styled for the warm canvas.
+///
+/// The fields were white with no border, which on cream made them read as the
+/// same surface as the white button beneath them — field and action looked like
+/// one element. A hairline separates them.
+struct SignInField<Field: View>: View {
 
     // MARK: - Properties
 
-    let title: String
-    let isEnabled: Bool
-    let action: () -> Void
+    @ViewBuilder let content: () -> Field
 
     // MARK: - UI
 
     var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(title)
-                .font(Constants.Fonts.buttonLabel)
-                .foregroundColor(isEnabled ? .black : .gray)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(isEnabled ? Color.white : Color.gray.opacity(0.2))
-                .cornerRadius(22)
-        }
-        .disabled(!isEnabled)
+        content()
+            .font(Constants.Fonts.body)
+            .foregroundColor(Constants.Colors.ink)
+            .tint(Constants.Colors.orangePrimary)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 17)
+            .background(
+                RoundedRectangle(cornerRadius: Constants.Radius.control)
+                    .fill(Constants.Colors.fieldSurface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Constants.Radius.control)
+                    .stroke(Constants.Colors.fieldStroke, lineWidth: 1)
+            )
     }
 
 }
@@ -101,11 +120,12 @@ struct SignInNextButton: View {
 
         SignInStepDots(total: 3, activeThrough: 1)
 
-        SignInNextButton(
-            title: "Next",
-            isEnabled: true,
-            action: {}
-        )
-        .padding(.horizontal, 32)
+        SignInField {
+            TextField("", text: .constant(""), prompt: signInPrompt("email@example.com"))
+        }
+
+        PrimaryButton(title: "Next", action: {})
     }
+    .padding(.horizontal, 32)
+    .background(Constants.Colors.background)
 }

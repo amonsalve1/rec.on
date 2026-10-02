@@ -2,7 +2,7 @@
 //  LoadingView.swift
 //  recon
 //
-//  Created by Ethan Chen on 11/28/2024.
+//  Created by Anatoli Monsalve on 7/29/2026.
 //
 
 import SwiftUI
@@ -16,21 +16,21 @@ struct LoadingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            Image("RecOnLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 120)
+            BrandWordmark(width: 148)
 
-            VStack(spacing: 12) {
-                Text("Logging in...")
-                    .font(Constants.Fonts.heading)
-                    .foregroundColor(.black)
-                    .padding(.top, 32)
+            ProgressView()
+                .tint(Constants.Colors.orangePrimary)
+                .padding(.top, 36)
 
-                Text("Just a sec")
-                    .font(Constants.Fonts.body)
-                    .foregroundColor(.gray)
-            }
+            Text("Signing you in")
+                .font(Constants.Fonts.heading)
+                .foregroundColor(Constants.Colors.ink)
+                .padding(.top, 24)
+
+            Text("Just a sec")
+                .font(Constants.Fonts.body)
+                .foregroundColor(Constants.Colors.inkSecondary)
+                .padding(.top, 6)
 
             Spacer()
         }

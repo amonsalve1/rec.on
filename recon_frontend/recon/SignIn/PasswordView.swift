@@ -24,30 +24,31 @@ struct PasswordView: View {
 
             Spacer()
 
-            logo
+            BrandWordmark(width: 104)
 
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 Text("What's your password?")
                     .font(Constants.Fonts.heading)
                     .foregroundColor(Constants.Colors.ink)
                     .multilineTextAlignment(.center)
-                    .padding(.top, 32)
+                    .padding(.top, 36)
 
                 field
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .font(Constants.Fonts.bodySmall)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
+                        .foregroundColor(Constants.Colors.danger)
+                        .multilineTextAlignment(.center)
                 }
 
-                SignInNextButton(
+                PrimaryButton(
                     title: "Confirm",
                     isEnabled: !viewModel.password.isEmpty
                 ) {
                     viewModel.submitPassword()
                 }
+                .padding(.top, 4)
             }
             .padding(.horizontal, 32)
 
@@ -55,22 +56,14 @@ struct PasswordView: View {
         }
     }
 
-    private var logo: some View {
-        Image("RecOnLogo")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 120, height: 120)
-    }
-
     private var field: some View {
-        SecureField("Password", text: $viewModel.password)
-            .font(Constants.Fonts.body)
-            .padding()
-            .background(Color.white)
-            .cornerRadius(22)
-            .onChange(of: viewModel.password) { _, _ in
-                viewModel.errorMessage = nil
-            }
+        SignInField {
+            SecureField("", text: $viewModel.password, prompt: signInPrompt("Password"))
+                .textContentType(.password)
+                .onChange(of: viewModel.password) { _, _ in
+                    viewModel.errorMessage = nil
+                }
+        }
     }
 
 }

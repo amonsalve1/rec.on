@@ -24,30 +24,31 @@ struct UsernameView: View {
 
             Spacer()
 
-            logo
+            BrandWordmark(width: 104)
 
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 Text("Pick a username")
                     .font(Constants.Fonts.heading)
-                    .foregroundColor(.black)
+                    .foregroundColor(Constants.Colors.ink)
                     .multilineTextAlignment(.center)
-                    .padding(.top, 32)
+                    .padding(.top, 36)
 
                 field
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .font(Constants.Fonts.bodySmall)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
+                        .foregroundColor(Constants.Colors.danger)
+                        .multilineTextAlignment(.center)
                 }
 
-                SignInNextButton(
+                PrimaryButton(
                     title: "Next",
                     isEnabled: !viewModel.username.isEmpty
                 ) {
                     viewModel.advanceFromUsername()
                 }
+                .padding(.top, 4)
             }
             .padding(.horizontal, 32)
 
@@ -55,26 +56,21 @@ struct UsernameView: View {
         }
     }
 
-    private var logo: some View {
-        Image("RecOnLogo")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 120, height: 120)
-    }
-
     private var field: some View {
-        TextField("username", text: $viewModel.username)
-            .font(Constants.Fonts.body)
-            .padding()
-            .background(Color.white)
-            .cornerRadius(22)
-            .autocapitalization(.none)
-            .autocorrectionDisabled()
-            .onChange(of: viewModel.username) { oldValue, newValue in
-                if oldValue != newValue && newValue.count > oldValue.count {
-                    viewModel.errorMessage = nil
+        SignInField {
+            TextField("", text: $viewModel.username, prompt: signInPrompt("username"))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .textContentType(.username)
+                /// Only clear the error as the name GROWS: retyping after a
+                /// "taken" response should keep the message until the value
+                /// actually differs from the one that was rejected.
+                .onChange(of: viewModel.username) { oldValue, newValue in
+                    if oldValue != newValue && newValue.count > oldValue.count {
+                        viewModel.errorMessage = nil
+                    }
                 }
-            }
+        }
     }
 
 }

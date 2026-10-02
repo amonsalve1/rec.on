@@ -22,30 +22,16 @@ struct SignInView: View {
             Constants.Colors.background
                 .ignoresSafeArea()
 
+            /// No title bar: it read "Sign In" on every step including the
+            /// one offering Get Started, and each step already states its own
+            /// question. The dots carry position instead.
             VStack(spacing: 0) {
-                titleBar
-
-                Spacer()
-
                 stepContent
 
-                Spacer()
-
                 progressDots
+                    .padding(.bottom, 28)
             }
         }
-    }
-
-    private var titleBar: some View {
-        HStack {
-            Text("Sign In")
-                .font(Constants.Fonts.bodyLarge)
-                .foregroundColor(Constants.Colors.ink)
-
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, Constants.Padding.screenHorizontal)
     }
 
     @ViewBuilder
@@ -64,13 +50,14 @@ struct SignInView: View {
         }
     }
 
+    /// Welcome and the loading interstitial are not steps you can be part way
+    /// through, so neither shows a position. Welcome used to draw its own row
+    /// as well as this one, which is why it carried two.
     @ViewBuilder
     private var progressDots: some View {
         switch viewModel.currentStep {
-        case .welcome:
+        case .welcome, .loading:
             EmptyView()
-        case .loading:
-            SignInStepDots(total: viewModel.totalSteps, activeThrough: -1)
         default:
             SignInStepDots(
                 total: viewModel.totalSteps,

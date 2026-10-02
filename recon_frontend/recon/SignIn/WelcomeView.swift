@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// The sign-in landing step with the logo and the two mode buttons.
+/// The sign-in landing step with the wordmark and the two mode buttons.
 struct WelcomeView: View {
 
     // MARK: - Properties
@@ -20,57 +20,40 @@ struct WelcomeView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            logo
+            BrandWordmark(width: 232)
 
-            Text("Recommend On the go.")
+            Text("Recommend on the go.")
                 .font(Constants.Fonts.bodyLarge)
-                .foregroundColor(.gray)
-                .padding(.top, 16)
+                .foregroundColor(Constants.Colors.inkSecondary)
+                .padding(.top, 18)
 
             Spacer()
-                .frame(height: 80)
 
             modeButtons
-
-            SignInStepDots(total: 3, activeThrough: 0)
         }
     }
 
-    private var logo: some View {
-        Image("RecOnLogo")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 200, height: 200)
-    }
-
+    /// One primary action and one quiet one. Both were previously the same
+    /// orange fill a shade apart, which gave a first-time visitor no signal
+    /// about which of the two was meant for them.
     private var modeButtons: some View {
-        VStack(spacing: 16) {
-            Button {
+        VStack(spacing: 10) {
+            PrimaryButton(title: "Get Started") {
                 viewModel.begin(.signUp)
-            } label: {
-                Text("Get Started")
-                    .font(Constants.Fonts.buttonLabel)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Constants.Colors.accent)
-                    .cornerRadius(22)
             }
 
             Button {
                 viewModel.begin(.signIn)
             } label: {
-                Text("Sign In")
-                    .font(Constants.Fonts.buttonLabel)
-                    .foregroundColor(.white)
+                Text("I already have an account")
+                    .font(Constants.Fonts.bodySemibold)
+                    .foregroundColor(Constants.Colors.orangePrimary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Constants.Colors.accent.opacity(0.9))
-                    .cornerRadius(20)
+                    .padding(.vertical, 16)
             }
         }
         .padding(.horizontal, 32)
-        .padding(.bottom, 50)
+        .padding(.bottom, 24)
     }
 
 }
