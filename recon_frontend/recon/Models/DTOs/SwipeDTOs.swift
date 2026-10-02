@@ -1,5 +1,5 @@
 //
-//  SwipeModels.swift
+//  SwipeDTOs.swift
 //  recon
 //
 //  Created by Anatoli Monsalve on 12/1/2024.
