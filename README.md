@@ -20,52 +20,52 @@
   <img src="docs/readme/info.png" width="100%" alt="Platform: iOS 26 and SwiftUI. Backend: Flask and PostgreSQL 16. Three topics: food, study spots and movies. Under load: 14% more throughput on the results endpoint. Made by Anatoli and Ethan.">
 </p>
 
-## How it works
+## What it does
 
-Pick a topic, swipe through the options, then submit one final pick. The option
-with the most likes wins. Ties are settled by a draw between the tied options,
-weighted by how many people made each one their final pick, so chance only
-decides when the vote genuinely cannot.
+Pick a topic, everyone swipes, and the server picks the winner.
 
-Solo mode is the same rule with one voter: swipe, and it draws from what you
-liked. Parties are invite-only. The host shares a code and you enter it on the
-home screen.
+The winner is whatever the most people liked. Everyone also submits one final
+pick, and ties get drawn with those picks as weights. Something four people
+chose beats something nobody chose, even when the likes come out even.
+
+Solo mode is the same rule with one voter. To join a party you need a code from
+whoever started it.
+
+## How it is put together
+
+```
+recon_frontend/   SwiftUI app
+recon_backend/    Flask API, Postgres, migrations
+docs/             measurements, credits, README art
+```
+
+Nothing that decides anything runs on the phone. The app draws screens and
+calls the API. Our first version counted votes in Swift and queried Overpass
+straight from the device. Moving all of that to the server was most of the
+rewrite.
+
+Three things we spent real time on:
+
+- Tokens sit in the Keychain. Access tokens expire fast and refresh tokens
+  rotate on every use.
+- Venue lookups go through our server, so there is no third-party key in the
+  app bundle. Answers are cached in Postgres for a day.
+- We measured the results endpoint instead of guessing at it. Folding three
+  aggregate queries and a lazy load into one statement took it from 7 queries
+  per request down to 4: +14% throughput and -17% p50 under load. One request
+  at a time, it changed nothing. [How we measured it](docs/measurements.md)
 
 ## Running it
 
-Set up the backend first, which needs Postgres, a virtualenv, migrations and
-secrets: [`recon_backend/README.md`](recon_backend/README.md). Debug builds of
-the app expect it on port 5001.
+Backend setup is in [recon_backend/README.md](recon_backend/README.md). Debug
+builds look for it on port 5001.
 
 ```bash
 cd recon_backend
 FLASK_APP=wsgi:app ./venv/bin/flask run --port 5001
 ```
 
-Then open `recon_frontend/recon.xcodeproj` and run. The API URL is a build
-setting in `recon_frontend/Config/`, not a constant in the source, and the
-release one stays a placeholder until DNS and TLS are live.
-
-## How it is built
-
-```
-recon_frontend/   SwiftUI app
-recon_backend/    Flask API, Postgres, migrations
-docs/             measurements, image credits, README art
-```
-
-The app holds no decision logic. It renders what the server sends and calls
-`/v1`, and never counts votes or reaches a third party on its own.
-
-- **Auth.** Tokens live in the Keychain. Access tokens are short-lived and
-  refresh tokens rotate, so the client stores both halves of every refresh.
-- **Places.** The phone sends coordinates, the server queries Overpass behind a
-  Postgres cache, and no provider key ever ships in the app. Option artwork is
-  fetched at runtime, never bundled ([credits](docs/credits.md)).
-- **Performance.** The results endpoint went from 7 queries per request to 4 by
-  folding three aggregates and a lazy member load into one statement. Worth
-  +14% throughput and −17% p50 under load, and nothing at all at concurrency 1,
-  which is the interesting part ([numbers](docs/measurements.md)).
+Then open `recon_frontend/recon.xcodeproj` and run.
 
 ---
 
