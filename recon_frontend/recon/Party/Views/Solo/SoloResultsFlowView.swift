@@ -57,11 +57,11 @@ struct SoloResultsFlowView: View {
 
             Text("No favorites selected")
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Text("You didn't like any options.")
                 .font(Constants.Fonts.label)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Spacer()
         }
@@ -111,7 +111,7 @@ struct SoloResultsFlowView: View {
 
             Text("Picking a winner…")
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
     }
 

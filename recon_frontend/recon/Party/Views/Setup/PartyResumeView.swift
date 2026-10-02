@@ -58,7 +58,7 @@ struct PartyResumeView: View {
 
             Text("Picking up where you left off…")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
     }
 
@@ -69,7 +69,7 @@ struct PartyResumeView: View {
 
             Text(viewModel.errorMessage ?? "It may have ended.")
                 .font(Constants.Fonts.label)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Button("Back") {
                 dismiss()

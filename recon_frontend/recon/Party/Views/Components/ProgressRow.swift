@@ -25,7 +25,7 @@ struct ProgressRow: View {
 
             Text("\(progress.swipe_count)/\(progress.total_options)")
                 .font(Constants.Fonts.label)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 12)

@@ -90,7 +90,7 @@ struct SwipeSoloView: View {
 
             Text(likedSummary)
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Button {
                 showRes = true
@@ -220,7 +220,7 @@ struct SwipeSoloView: View {
                     Text(cand.address)
                 }
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             HStack(spacing: 6) {

@@ -34,7 +34,7 @@ struct HomeJoinSheet: View {
 
             Text("Ask whoever started it for the code.")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             field
 

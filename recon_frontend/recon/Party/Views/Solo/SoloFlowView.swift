@@ -80,7 +80,7 @@ struct SoloFlowView: View {
 
             Text("Building your deck…")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Spacer()
         }

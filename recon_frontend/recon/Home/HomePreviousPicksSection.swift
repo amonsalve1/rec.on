@@ -38,7 +38,7 @@ struct HomePreviousPicksSection: View {
         HStack(alignment: .firstTextBaseline) {
             Text("Recent")
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
@@ -59,7 +59,7 @@ struct HomePreviousPicksSection: View {
     private var emptyLabel: some View {
         Text("Nothing decided yet")
             .font(Constants.Fonts.label)
-            .foregroundColor(.secondary)
+            .foregroundColor(Constants.Colors.inkSecondary)
             .padding(.horizontal, 24)
     }
 
@@ -91,7 +91,7 @@ struct HomePreviousPicksSection: View {
 
             Text(pick.name)
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.primary)
+                .foregroundColor(Constants.Colors.ink)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .frame(width: tileSize, alignment: .leading)

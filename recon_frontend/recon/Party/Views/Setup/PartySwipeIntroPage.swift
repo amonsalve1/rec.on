@@ -106,7 +106,7 @@ struct PartySwipeIntroPage: View {
                 Text("120 Dryden Rd, Ithaca, NY 14850")
             }
             .font(Constants.Fonts.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(Constants.Colors.inkSecondary)
 
             HStack(spacing: 6) {
                 Tag(text: "College Town")
@@ -116,7 +116,7 @@ struct PartySwipeIntroPage: View {
 
             Text("Casual joint turning out fresh, authentic Xi'an fare such as hand-pulled noodles, spiced-meat buns.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .lineLimit(3)
         }
         .padding(.horizontal, 14)

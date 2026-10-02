@@ -56,7 +56,7 @@ struct PartyInvitePage: View {
 
                 Text("Invite the gang!")
                     .font(Constants.Fonts.bodyRegularRounded)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             Spacer()

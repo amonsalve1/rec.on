@@ -53,7 +53,7 @@ struct PickCard: View {
                     Text(candidate.address)
                 }
                 .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             if !candidate.tags.isEmpty {

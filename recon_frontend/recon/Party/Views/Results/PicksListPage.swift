@@ -39,14 +39,14 @@ struct PicksListPage: View {
 
                 Text("One pick from each person")
                     .font(Constants.Fonts.label)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             Spacer()
 
             Text("\(candidates.count) picks")
                 .font(Constants.Fonts.labelMedium)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
     }
 

@@ -75,7 +75,7 @@ struct WaitingForOthersView: View {
 
             Text("\(viewModel.allFinalPicks.count) of \(viewModel.session?.participants?.count ?? 0) have picked")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
     }
 

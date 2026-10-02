@@ -107,7 +107,7 @@ struct SwipePartyView: View {
 
             Text("Time to pick your one favorite")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Button {
                 continueToPick()
@@ -244,7 +244,7 @@ struct SwipePartyView: View {
                     Text(cand.address)
                 }
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             HStack(spacing: 6) {

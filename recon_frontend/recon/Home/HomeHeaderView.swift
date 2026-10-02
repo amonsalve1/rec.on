@@ -59,7 +59,7 @@ struct HomeHeaderView: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(dayPart)
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 

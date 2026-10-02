@@ -50,7 +50,7 @@ struct WinnerCard: View {
                     Text(winner.address)
                 }
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             HStack(spacing: 6) {

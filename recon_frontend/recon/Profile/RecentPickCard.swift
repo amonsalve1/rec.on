@@ -40,7 +40,7 @@ struct RecentPickCard: View {
                     Text(pick.address.isEmpty ? "Address not available" : pick.address)
                 }
                 .font(.system(size: 13))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 
                 HStack(spacing: 6) {
                     ForEach(pick.tags.prefix(3), id: \.self) { tag in

@@ -24,7 +24,7 @@ struct RandCard: View {
             Text(candidate.name)
                 .font(.system(size: center ? 16 : 14, weight: .semibold, design: .rounded))
                 .lineLimit(1)
-                .foregroundColor(.primary.opacity(center ? 1 : 0.6))
+                .foregroundColor(Constants.Colors.ink.opacity(center ? 1 : 0.6))
         }
         .padding(8)
         .background(Color.white.opacity(center ? 1 : 0.7))

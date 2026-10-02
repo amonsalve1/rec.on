@@ -36,7 +36,7 @@ struct FinalPickView: View {
 
             Text("Choose ONE option to enter the pool")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             if viewModel.likedOptions.isEmpty {
                 emptyState
@@ -71,10 +71,10 @@ struct FinalPickView: View {
             Spacer()
             Text("No favorites selected")
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
             Text("You didn't like any options. You'll be skipped in the final pick.")
                 .font(Constants.Fonts.label)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             Spacer()
@@ -89,7 +89,7 @@ struct FinalPickView: View {
             VStack(spacing: 16) {
                 Text("This will be your ONE pick in the pool:")
                     .font(Constants.Fonts.labelMedium)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
                     .padding(.top, 8)
 
                 SelectablePickCard(
@@ -102,7 +102,7 @@ struct FinalPickView: View {
                 if viewModel.likedOptions.count > 1 {
                     Text("Tap to switch to another option")
                         .font(.system(size: 12, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Constants.Colors.inkSecondary)
                         .padding(.top, 4)
                 }
             }
@@ -221,12 +221,12 @@ struct SelectablePickCard: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(candidate.name)
                 .font(Constants.Fonts.bodySemibold)
-                .foregroundColor(.primary)
+                .foregroundColor(Constants.Colors.ink)
 
             if !candidate.address.isEmpty {
                 Text(candidate.address)
                     .font(Constants.Fonts.label)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
             }
         }
     }

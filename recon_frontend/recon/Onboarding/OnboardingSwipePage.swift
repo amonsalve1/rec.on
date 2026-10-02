@@ -53,7 +53,7 @@ struct OnboardingSwipePage: View {
 
             Text("Right means yes. Left means no. That's the whole app.")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -80,7 +80,7 @@ struct OnboardingSwipePage: View {
 
                 Text("Cozy · Spicy · Imaginary")
                     .font(Constants.Fonts.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 14)

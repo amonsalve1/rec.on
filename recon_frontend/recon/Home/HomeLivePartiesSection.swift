@@ -33,7 +33,7 @@ struct HomeLivePartiesSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Happening now")
                 .font(Constants.Fonts.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .textCase(.uppercase)
                 .tracking(0.6)
                 .padding(.horizontal, 24)
@@ -65,12 +65,12 @@ struct HomeLivePartiesSection: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(party.title)
                     .font(Constants.Fonts.bodySemibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Constants.Colors.ink)
                     .lineLimit(1)
 
                 Text(statusLine(party))
                     .font(Constants.Fonts.label)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Constants.Colors.inkSecondary)
             }
 
             Spacer()
@@ -83,7 +83,7 @@ struct HomeLivePartiesSection: View {
 
             Image(systemName: "chevron.right")
                 .font(Constants.Fonts.caption)
-                .foregroundColor(Color.secondary.opacity(0.4))
+                .foregroundColor(Constants.Colors.inkSecondary.opacity(0.4))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

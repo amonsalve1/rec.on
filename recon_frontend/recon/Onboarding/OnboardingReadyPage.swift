@@ -42,7 +42,7 @@ struct OnboardingReadyPage: View {
 
             Text("Everyone swipes, everyone picks a favorite,\nand the fairest option wins.")
                 .font(Constants.Fonts.bodyRegularRounded)
-                .foregroundColor(.secondary)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 28)
