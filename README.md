@@ -22,7 +22,7 @@ Solo mode runs on the same endpoint and the same rule with an electorate of one:
     recon_backend/    Flask API, Postgres, migrations
     docs/             measurements, image credits
 
-All of the decision logic lives in the backend. The app renders state and calls `/v1`. It does not count votes, choose winners, or talk to any outside service on its own.
+All of the decision logic lives in the backend. The app renders state and calls `/v1`. It does not count votes, choose winners, or call any outside service on its own; beyond the API, the only thing it loads is option artwork, from URLs the server hands it.
 
 ## Running it
 
@@ -39,9 +39,9 @@ The base URL is a build setting, not a constant in source. `recon_frontend/Confi
 
 ### Requirements
 
-- Xcode 15 or later
-- iOS 17.0+
-- Swift 5.9+
+- Xcode 26 or later
+- iOS 26.0+
+- Swift 5 language mode
 - Postgres 16
 
 ## Features
@@ -64,6 +64,6 @@ Joining is invite-only. The host mints a code and the only place to enter one is
 
 Location is only used for the "food nearby" topic. The device sends coordinates and the server does the lookup through Overpass, backed by a Postgres cache with a seed fallback, so no places provider is ever called from the phone. Movies and study spots come from a catalogue and never needed location.
 
-Option artwork is fetched at runtime from Wikimedia and is not bundled with the app. Options without a picture get a lettered card, which is the designed default rather than a missing image. See `docs/credits.md`.
+Option artwork is not bundled with the app. It is fetched at runtime from the image an option's OpenStreetMap or Wikidata entry links to. Options without a picture get a lettered card, which is the designed default rather than a missing image. See `docs/credits.md`.
 
 Before and after numbers for the results endpoint, with the exact commands used, are in `docs/measurements.md`.
