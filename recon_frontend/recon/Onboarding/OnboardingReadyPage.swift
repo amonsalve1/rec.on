@@ -49,28 +49,7 @@ struct OnboardingReadyPage: View {
     }
 
     private var finishButton: some View {
-        Button {
-            onFinish()
-        } label: {
-            Text("Let's decide")
-                .font(Constants.Fonts.bodySemibold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Constants.Colors.orangeLight,
-                                    Constants.Colors.orangePrimary
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                )
-        }
+        PrimaryButton(title: "Let's decide", action: onFinish)
     }
 
 }

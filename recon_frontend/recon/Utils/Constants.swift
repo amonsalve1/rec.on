@@ -58,6 +58,46 @@ enum Constants {
         /// depth instead of reading as one flat fill.
         static let canvasWash = Color(red: 1.0, green: 0.78, blue: 0.62)
 
+        /// Secondary copy: taglines, field placeholders, helper lines.
+        static let inkSecondary = Color(red: 0.45, green: 0.45, blue: 0.45)
+
+        /// Fill behind a text field sitting on the canvas.
+        static let fieldSurface = Color.white
+
+        /// Hairline around a field, so it reads as an input on a warm canvas
+        /// rather than a white rectangle floating on a cream one.
+        static let fieldStroke = Color(red: 0.90, green: 0.86, blue: 0.82)
+
+        /// Fill for a control that is present but not yet actionable.
+        static let controlDisabled = Color(red: 0.90, green: 0.88, blue: 0.86)
+
+        /// Label on a disabled control.
+        static let controlDisabledInk = Color(red: 0.62, green: 0.60, blue: 0.58)
+
+    }
+
+    /// Shared gradients. The brand ramp is the app's primary call to action and
+    /// its topic cards; defining it once keeps every one of them identical.
+    enum Gradients {
+
+        /// The primary button ramp, light orange into brand orange.
+        static let brand = LinearGradient(
+            colors: [Colors.orangeLight, Colors.orangePrimary],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+
+    }
+
+    /// Shared corner radii.
+    enum Radius {
+
+        /// Buttons and text fields.
+        static let control: CGFloat = 16
+
+        /// Cards and sheets.
+        static let card: CGFloat = 20
+
     }
 
     /// The app type scale. Display faces use the rounded design.
