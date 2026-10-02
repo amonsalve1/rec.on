@@ -128,7 +128,7 @@ struct SwipeSoloView: View {
         case 1:
             return "You liked 1 option"
         default:
-            return "You liked \(count) options"
+            return "You liked \(count.counted("option"))"
         }
     }
 

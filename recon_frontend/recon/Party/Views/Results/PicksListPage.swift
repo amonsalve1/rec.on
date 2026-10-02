@@ -44,7 +44,7 @@ struct PicksListPage: View {
 
             Spacer()
 
-            Text("\(candidates.count) picks")
+            Text(candidates.count.counted("pick"))
                 .font(Constants.Fonts.labelMedium)
                 .foregroundColor(Constants.Colors.inkSecondary)
         }

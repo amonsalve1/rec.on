@@ -175,7 +175,7 @@ extension HomeView {
 
             if party.viewer.swipedCount < party.optionCount {
                 let left = party.optionCount - party.viewer.swipedCount
-                return "\(left) card\(left == 1 ? "" : "s") left to swipe"
+                return "\(left.counted("card")) left to swipe"
             }
 
             if !party.viewer.hasPicked {
