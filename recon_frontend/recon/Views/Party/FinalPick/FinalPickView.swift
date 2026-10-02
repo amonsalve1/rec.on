@@ -122,8 +122,8 @@ struct FinalPickView: View {
                             Constants.Colors.orangeLight,
                             Constants.Colors.orangePrimary
                         ] : [
-                            Color.gray,
-                            Color.gray
+                            Constants.Colors.inkSecondary,
+                            Constants.Colors.inkSecondary
                         ],
                         startPoint: .leading,
                         endPoint: .trailing

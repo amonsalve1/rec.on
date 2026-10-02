@@ -52,7 +52,7 @@ struct PartyInvitePage: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Welcome to\nthe party!")
                     .font(Constants.Fonts.display)
-                    .foregroundColor(.black)
+                    .foregroundColor(Constants.Colors.ink)
 
                 Text("Invite the gang!")
                     .font(Constants.Fonts.bodyRegularRounded)

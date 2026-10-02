@@ -92,7 +92,7 @@ struct EditProfileView: View {
 
             Text("Tap to change photo")
                 .font(Constants.Fonts.bodySmall)
-                .foregroundColor(.gray)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
         .padding(.top, 40)
     }
@@ -107,7 +107,7 @@ struct EditProfileView: View {
             Image(systemName: "person.circle.fill")
                 .resizable()
                 .scaledToFill()
-                .foregroundColor(.gray)
+                .foregroundColor(Constants.Colors.inkSecondary)
         }
     }
 
@@ -188,7 +188,7 @@ struct EditProfileView: View {
                 endPoint: .trailing
             )
         } else {
-            Color.gray.opacity(0.3)
+            Constants.Colors.inkSecondary.opacity(0.3)
         }
     }
 
@@ -207,7 +207,7 @@ struct EditProfileView: View {
             TextField(placeholder, text: text)
                 .font(Constants.Fonts.body)
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(Constants.Colors.inkSecondary.opacity(0.1))
                 .cornerRadius(12)
                 .onChange(of: text.wrappedValue) { _, _ in
                     viewModel.errorMessage = nil

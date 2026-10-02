@@ -291,8 +291,8 @@ struct RoundBtn: View {
                     .frame(width: 64, height: 64)
 
                 Image(systemName: systemName)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black)
+                    .font(Constants.Fonts.heading)
+                    .foregroundColor(Constants.Colors.ink)
             }
         }
         .buttonStyle(.plain)

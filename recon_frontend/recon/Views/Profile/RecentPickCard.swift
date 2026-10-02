@@ -32,14 +32,14 @@ struct RecentPickCard: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 Text(pick.name)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(Constants.Fonts.bodySemibold)
                 
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 13))
+                        .font(Constants.Fonts.caption)
                     Text(pick.address.isEmpty ? "Address not available" : pick.address)
                 }
-                .font(.system(size: 13))
+                .font(Constants.Fonts.caption)
                 .foregroundColor(Constants.Colors.inkSecondary)
                 
                 HStack(spacing: 6) {

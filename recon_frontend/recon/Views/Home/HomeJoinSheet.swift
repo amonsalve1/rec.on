@@ -87,7 +87,7 @@ struct HomeJoinSheet: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         code.isEmpty
-                            ? AnyShapeStyle(Color.gray.opacity(0.3))
+                            ? AnyShapeStyle(Constants.Colors.inkSecondary.opacity(0.3))
                             : AnyShapeStyle(
                                 LinearGradient(
                                     colors: [
