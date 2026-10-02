@@ -9,6 +9,14 @@
 </p>
 
 <p align="center">
+  <a href="#how-it-works">How it works</a> &nbsp;&bull;&nbsp;
+  <a href="#what-we-built">What we built</a> &nbsp;&bull;&nbsp;
+  <a href="#run-it">Run it</a> &nbsp;&bull;&nbsp;
+  <a href="docs/measurements.md">Measurements</a> &nbsp;&bull;&nbsp;
+  <a href="https://www.youtube.com/watch?v=55O7b-9GzwY">Demo video</a>
+</p>
+
+<p align="center">
   <a href="https://www.youtube.com/watch?v=55O7b-9GzwY"><img src="docs/readme/demo.png" width="240" alt="Watch the demo on YouTube"></a>
 </p>
 
@@ -20,7 +28,9 @@
   <img src="docs/readme/info.png" width="100%" alt="Platform: iOS 26 and SwiftUI. Backend: Flask and PostgreSQL 16. Three topics: food, study spots and movies. Under load: 14% more throughput on the results endpoint. Made by Anatoli and Ethan.">
 </p>
 
-## What it does
+---
+
+## How it works
 
 Pick a topic, everyone swipes, and the server picks the winner.
 
@@ -31,7 +41,7 @@ chose beats something nobody chose, even when the likes come out even.
 Solo mode is the same rule with one voter. To join a party you need a code from
 whoever started it.
 
-## How it is put together
+## What we built
 
 ```
 recon_frontend/   SwiftUI app
@@ -41,21 +51,20 @@ docs/             measurements, credits, README art
 
 Nothing that decides anything runs on the phone. The app draws screens and
 calls the API. Our first version counted votes in Swift and queried Overpass
-straight from the device. Moving all of that to the server was most of the
+straight from the device, and moving all of that to the server was most of the
 rewrite.
 
-Three things we spent real time on:
+- **Approval voting, server side.** One verdict per person per option, enforced
+  by the primary key. Ties break by lottery weighted on final picks.
+- **Tokens in the Keychain.** Short-lived access tokens, refresh tokens that
+  rotate on every use, reuse detection on the server.
+- **No third-party keys on the device.** Venue lookups go through our API and
+  cache in Postgres for a day.
+- **7 queries per request down to 4.** Three aggregates and a lazy load folded
+  into one statement: +14% throughput and -17% p50 under load. One request at a
+  time it changed nothing. [How we measured](docs/measurements.md)
 
-- Tokens sit in the Keychain. Access tokens expire fast and refresh tokens
-  rotate on every use.
-- Venue lookups go through our server, so there is no third-party key in the
-  app bundle. Answers are cached in Postgres for a day.
-- We measured the results endpoint instead of guessing at it. Folding three
-  aggregate queries and a lazy load into one statement took it from 7 queries
-  per request down to 4: +14% throughput and -17% p50 under load. One request
-  at a time, it changed nothing. [How we measured it](docs/measurements.md)
-
-## Running it
+## Run it
 
 Backend setup is in [recon_backend/README.md](recon_backend/README.md). Debug
 builds look for it on port 5001.
