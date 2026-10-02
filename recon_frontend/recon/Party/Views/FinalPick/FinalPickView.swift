@@ -233,7 +233,7 @@ struct SelectablePickCard: View {
 
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 16)
-            .fill(Color(.systemBackground))
+            .fill(Constants.Colors.fieldSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(

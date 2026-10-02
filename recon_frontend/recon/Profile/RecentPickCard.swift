@@ -19,7 +19,7 @@ struct RecentPickCard: View {
                             .resizable()
                             .scaledToFill()
                     } placeholder: {
-                        Color(.systemGray5)
+                        Constants.Colors.controlDisabled
                     }
                 } else {
                     Image(pick.imageUrl.isEmpty ? "food1" : pick.imageUrl)

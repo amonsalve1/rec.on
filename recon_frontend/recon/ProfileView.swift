@@ -8,8 +8,8 @@
 import SwiftUI
 import UIKit
 
-/// The profile page: ink banner, avatar card with name and location, and the
-/// list of recent picks.
+/// The profile page: brand banner, avatar card with name and location, and
+/// the list of recent picks.
 struct ProfileView: View {
 
     // MARK: - Properties
@@ -40,7 +40,7 @@ struct ProfileView: View {
 
             picksList
         }
-        .background(Color(.systemBackground))
+        .background(Constants.Colors.background)
         .sheet(isPresented: $viewModel.showEditSheet) {
             editProfileSheet
         }
@@ -56,7 +56,10 @@ struct ProfileView: View {
 
     private var header: some View {
         ZStack(alignment: .topLeading) {
-            Constants.Colors.ink
+            /// A near-black slab was the one dark surface in a warm app, and
+            /// it read as a different product. The brand ramp is what every
+            /// other full-bleed header here uses.
+            Constants.Gradients.brand
                 .frame(height: bannerHeight)
                 .ignoresSafeArea(edges: .top)
 
@@ -76,10 +79,11 @@ struct ProfileView: View {
         } label: {
             Image(systemName: "chevron.left")
                 .font(Constants.Fonts.buttonLabel)
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .frame(width: 44, height: 44)
-                .background(Constants.Colors.accent)
-                .clipShape(Circle())
+                .background(
+                    Circle().fill(Color.white.opacity(0.22))
+                )
         }
         .padding(.leading, 24)
         .padding(.top, Constants.Padding.screenHorizontal)
@@ -95,13 +99,13 @@ struct ProfileView: View {
             .padding(.horizontal, 24)
             .padding(.top, 48)
             .padding(.bottom, Constants.Padding.screenHorizontal)
-            .background(Color(.systemBackground))
+            .background(Constants.Colors.background)
 
             avatar
                 .frame(width: avatarSize, height: avatarSize)
                 .clipShape(Circle())
                 .overlay(
-                    Circle().stroke(Color.white, lineWidth: 4)
+                    Circle().stroke(Constants.Colors.background, lineWidth: 4)
                 )
                 .offset(x: 24, y: -48)
         }
@@ -111,7 +115,7 @@ struct ProfileView: View {
         HStack(alignment: .center) {
             Text(displayName)
                 .font(Constants.Fonts.heading)
-                .foregroundColor(.black)
+                .foregroundColor(Constants.Colors.ink)
 
             Spacer()
 
@@ -121,16 +125,11 @@ struct ProfileView: View {
             } label: {
                 Text(viewModel.isOwnProfile ? "Edit" : "Message")
                     .font(Constants.Fonts.subheadlineSemibold)
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 8)
-                    .background(Constants.Colors.accent)
-                    .cornerRadius(18)
-                    .shadow(
-                        color: .black.opacity(0.25),
-                        radius: 4,
-                        x: 0,
-                        y: 2
+                    .background(
+                        Capsule().fill(Constants.Gradients.brand)
                     )
             }
         }
@@ -138,9 +137,9 @@ struct ProfileView: View {
 
     private var statsRow: some View {
         HStack {
-            Text("\(viewModel.profile?.friendsCount ?? 0) friends")
+            Text((viewModel.profile?.friendsCount ?? 0).counted("friend"))
                 .font(Constants.Fonts.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(Constants.Colors.inkSecondary)
 
             Spacer()
 
@@ -148,11 +147,11 @@ struct ProfileView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "mappin.and.ellipse")
                         .font(Constants.Fonts.subheadline)
-                        .foregroundColor(Constants.Colors.accent)
+                        .foregroundColor(Constants.Colors.orangePrimary)
 
                     Text(displayLocation)
                         .font(Constants.Fonts.subheadline)
-                        .foregroundColor(.black)
+                        .foregroundColor(Constants.Colors.ink)
                 }
             }
         }
@@ -175,7 +174,7 @@ struct ProfileView: View {
             Image(systemName: "person.circle.fill")
                 .resizable()
                 .scaledToFill()
-                .foregroundColor(.gray)
+                .foregroundColor(Constants.Colors.controlDisabled)
         }
     }
 
@@ -200,7 +199,7 @@ struct ProfileView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         } else if viewModel.recentPicks.isEmpty {
             Text("No recent picks yet")
-                .foregroundColor(.gray)
+                .foregroundColor(Constants.Colors.inkSecondary)
                 .font(Constants.Fonts.subheadline)
                 .padding(.top, 8)
         } else {
@@ -233,12 +232,23 @@ struct ProfileView: View {
 
     // MARK: - Helpers
 
+    /// The server sends an EMPTY name rather than omitting it for an account
+    /// that never completed profile setup, so `??` never fired and the page
+    /// rendered a blank line where the name goes. Empty counts as missing.
     private var displayName: String {
-        viewModel.profile?.name ?? (storedName.isEmpty ? "User" : storedName)
+        let candidates = [viewModel.profile?.name, storedName]
+        return candidates
+            .compactMap { $0 }
+            .first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            ?? "User"
     }
 
     private var displayLocation: String {
-        viewModel.profile?.location ?? storedLocation
+        let candidates = [viewModel.profile?.location, storedLocation]
+        return candidates
+            .compactMap { $0 }
+            .first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            ?? ""
     }
 
 }
