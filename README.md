@@ -49,6 +49,9 @@ recon_backend/    Flask API, Postgres, migrations
 docs/             measurements, credits, README art
 ```
 
+Why everything moved to the server, and the security holes we closed on the
+way, are in [BACKEND_SPEC.md](BACKEND_SPEC.md).
+
 Nothing that decides anything runs on the phone. The app draws screens and
 calls the API. Our first version counted votes in Swift and queried Overpass
 straight from the device, and moving all of that to the server was most of the
@@ -66,16 +69,23 @@ rewrite.
 
 ## Run it
 
-Backend setup is in [recon_backend/README.md](recon_backend/README.md). Debug
-builds look for it on port 5001.
+Needs Xcode 26 and Postgres 16, or Docker for the database. First-time setup
+(the virtualenv and the `.env` secrets) is in
+[recon_backend/README.md](recon_backend/README.md). Debug builds look for the
+API on port 5001, because macOS AirPlay takes 5000.
 
 ```bash
 cd recon_backend
+docker compose up -d db                  # or a local Postgres 16
+FLASK_APP=wsgi:app ./venv/bin/flask db upgrade
 FLASK_APP=wsgi:app ./venv/bin/flask run --port 5001
 ```
 
 Then open `recon_frontend/recon.xcodeproj` and run.
 
----
+The backend tests cover auth, parties, invites, swipes and picks, and run
+against a separate `recon_test` database (the backend README sets it up):
 
-<p align="center"><sub>This is a fresh repo. We had to start over because of too many merge conflicts when trying to combine the parts we built separately.</sub></p>
+```bash
+cd recon_backend && ./venv/bin/pytest
+```
