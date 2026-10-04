@@ -19,8 +19,8 @@ from .deps import current_user, require_auth
 bp = Blueprint("auth", __name__)
 
 # compared against when the email is unknown, so a missing account costs the
-# same wall-clock time as a wrong password. the old backend returned early,
-# which let anyone probe for registered emails.
+# same wall-clock time as a wrong password. returning early would let anyone
+# probe for registered emails by timing the response.
 _DUMMY_HASH = bcrypt.hashpw(b"timing-equaliser", bcrypt.gensalt(rounds=BCRYPT_ROUNDS)).decode()
 
 

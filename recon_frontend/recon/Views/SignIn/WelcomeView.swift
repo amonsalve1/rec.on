@@ -33,9 +33,8 @@ struct WelcomeView: View {
         }
     }
 
-    /// One primary action and one quiet one. Both were previously the same
-    /// orange fill a shade apart, which gave a first-time visitor no signal
-    /// about which of the two was meant for them.
+    /// One primary action and one quiet one, so a first-time visitor can
+    /// tell at a glance which of the two is meant for them.
     private var modeButtons: some View {
         VStack(spacing: 10) {
             PrimaryButton(title: "Get Started") {

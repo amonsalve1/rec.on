@@ -1,8 +1,6 @@
 # Rec.On backend
 
-Flask + Postgres. Replaces the earlier `rec.on` stub, which no longer starts
-(it imports `jwt_refresh_token_required`, removed in Flask-JWT-Extended 4.0,
-and calls a `generate_default_options` that was never written).
+The Flask + Postgres API behind the app.
 
 ## Running it
 
@@ -36,9 +34,9 @@ Uses `recon_test`, truncating between tests.
 
 ## Notes
 
-`.env` is gitignored and must stay that way. The previous backend committed
-its signing key, so anyone could mint a token for any user; treat that value
-as public forever and never reuse it.
+`.env` is gitignored and must stay that way. A signing key that has ever been
+committed lets anyone mint a token for any user, so treat any key that has
+been in git as public forever and never reuse it.
 
 Rotating `JWT_SECRET_KEY`: put the old value in `JWT_SECRET_KEY_PREVIOUS`,
 deploy, wait 10 minutes for outstanding access tokens to expire, then clear

@@ -54,7 +54,7 @@ def _choose_winner(approvals, picks):
     1. The options with the highest approval count are the leaders.
     2. A single leader wins outright.
     3. Tied leaders go to a lottery weighted by how many final picks each
-       received — the lottery only ever arbitrates genuine ties.
+       received. The lottery only ever arbitrates genuine ties.
     4. If nobody liked anything, the picked options themselves are the
        leaders (a pick is still a preference).
     Returns the winning option_id, or None if there is no signal at all.
@@ -227,8 +227,8 @@ def spin(public_id):
     """Complete the party: approval voting, pick-weighted lottery on ties.
 
     The gate: every active member must have submitted a final pick, except a
-    single-member party, which may spin straight from its liked swipes —
-    that is the solo flow, riding the same rule.
+    single-member party, which may spin straight from its liked swipes.
+    That is the solo flow, riding the same rule.
 
     Idempotent: once a winner exists, every later spin returns the same
     party unchanged, so racing clients all converge on one result.

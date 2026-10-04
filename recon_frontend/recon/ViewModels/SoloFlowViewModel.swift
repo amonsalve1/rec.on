@@ -12,7 +12,7 @@ import Foundation
 extension SoloFlowView {
 
     /// The ViewModel for the solo flow: a party of one riding the same v1
-    /// backend as group mode — the server builds the deck, records swipes,
+    /// backend as group mode: the server builds the deck, records swipes,
     /// and draws the winner from the likes.
     final class ViewModel: ObservableObject {
 
@@ -84,7 +84,7 @@ extension SoloFlowView {
         }
 
         /// Asks the backend to draw the winner from the likes. A party of one
-        /// needs no final pick — every liked option is a tied approval leader,
+        /// needs no final pick. Every liked option is a tied approval leader,
         /// so the spin is a uniform draw over them, server-side.
         func spin(completion: @escaping (PartyCandidate?) -> Void) {
             guard let sessionId = session?.id else {

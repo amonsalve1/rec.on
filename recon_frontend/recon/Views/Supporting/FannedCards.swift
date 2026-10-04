@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Three brand-tinted cards fanned like a hand — the app's motif for "a deck
+/// Three brand-tinted cards fanned like a hand, the app's motif for "a deck
 /// of options", used in onboarding and end-of-deck states.
 struct FannedCards: View {
 

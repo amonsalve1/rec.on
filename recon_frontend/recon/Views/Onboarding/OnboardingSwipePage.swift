@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// The tutorial page: a real, draggable card. The user learns the mechanic
-/// by performing it — a completed swipe (either direction) advances the flow.
+/// by performing it: a completed swipe (either direction) advances the flow.
 struct OnboardingSwipePage: View {
 
     // MARK: - Properties

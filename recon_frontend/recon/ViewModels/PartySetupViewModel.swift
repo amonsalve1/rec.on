@@ -59,7 +59,7 @@ extension PartySetupView {
 
         // MARK: - Requests
 
-        /// Creates the party for the topic — the backend builds the option
+        /// Creates the party for the topic. The backend builds the option
         /// deck, using our location when the topic wants nearby places.
         func startParty(topic: String, completion: @escaping (Bool) -> Void) {
             isLoading = true

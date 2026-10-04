@@ -10,11 +10,8 @@ import Foundation
 
 extension ProfileSetupView {
 
-    /// The ViewModel for the post-sign-up profile step.
-    ///
-    /// The screen previously held this as loose `@State` alongside its layout,
-    /// which is the one place in the app that did not follow the nested
-    /// view-model pattern.
+    /// The ViewModel for the post-sign-up profile step: the form state and
+    /// the save, so the view only lays them out.
     @MainActor
     class ViewModel: ObservableObject {
 

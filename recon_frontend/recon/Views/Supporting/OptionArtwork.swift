@@ -10,7 +10,7 @@ import SwiftUI
 /// Artwork for an option card.
 ///
 /// When the backend supplied an image it is shown; otherwise the card gets a
-/// deliberate type treatment — the option's initial, oversized, on a tinted
+/// deliberate type treatment: the option's initial, oversized, on a tinted
 /// field derived from its own name. Imageless options are the common case
 /// (a movie with no free-licensed still, a venue nobody has photographed),
 /// so this is the designed default rather than a fallback that reads broken.
@@ -28,7 +28,7 @@ struct OptionArtwork: View {
 
     /// The gradient sizes the view and the picture rides on top of it as an
     /// overlay. Put the picture in the layout instead and an aspect-fill photo
-    /// reports the width its height implies — wider than the card — and drags
+    /// reports the width its height implies (wider than the card) and drags
     /// the whole card past its own padding the moment the image lands.
     /// `.clipped()` does not save you there: it trims drawing, not layout.
     var body: some View {
@@ -76,7 +76,7 @@ struct OptionArtwork: View {
         return URL(string: imageUrl)
     }
 
-    /// The option's initial, skipping a leading article — otherwise half a
+    /// The option's initial, skipping a leading article, otherwise half a
     /// movie deck reads "T" ("The Matrix", "The Dark Knight", "The Shawshank
     /// Redemption") and the cards stop being distinguishable.
     private var initialCharacter: String {

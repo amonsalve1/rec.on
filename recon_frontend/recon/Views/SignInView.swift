@@ -51,8 +51,8 @@ struct SignInView: View {
     }
 
     /// Welcome and the loading interstitial are not steps you can be part way
-    /// through, so neither shows a position. Welcome used to draw its own row
-    /// as well as this one, which is why it carried two.
+    /// through, so neither shows a position. This is the only place the dots
+    /// are drawn.
     @ViewBuilder
     private var progressDots: some View {
         switch viewModel.currentStep {

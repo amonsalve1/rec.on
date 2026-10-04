@@ -11,7 +11,7 @@ every command and in `deploy/nginx.conf`; the same domain goes into
 - Create an **A record**: `api.recon.example -> 34.21.78.117`. Wait until
   `dig +short api.recon.example` answers with the IP.
 - GCE firewall must allow tcp/80 and tcp/443. Port 5000 must NOT be open to
-  the world — the compose file binds it to loopback, keep it that way.
+  the world. The compose file binds it to loopback, keep it that way.
 
 ## 1. One-time: secrets
 
@@ -20,7 +20,7 @@ every command and in `deploy/nginx.conf`; the same domain goes into
 - `JWT_SECRET_KEY` and `SERVER_PEPPER`: long random strings
   (`openssl rand -hex 32`), never reused from anywhere.
 - **`POSTGRES_PASSWORD`: must be set in the shell env / systemd unit that
-  runs compose.** The compose file falls back to `recon` if unset — fine on
+  runs compose.** The compose file falls back to `recon` if unset, which is fine on
   a laptop, not on a server.
 
 ## 2. One-time: nginx + certificate
@@ -55,7 +55,7 @@ Add a deploy hook so renewals reload nginx:
 git pull
 docker compose up -d --build
 
-# migrations do NOT run on boot — apply them explicitly.
+# migrations do NOT run on boot, so apply them explicitly.
 # there are pending revisions the running database has never seen
 # (swipes, final picks + winner column).
 docker compose run --rm api flask db upgrade

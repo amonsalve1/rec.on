@@ -29,7 +29,7 @@ final class RecOnAPI: @unchecked Sendable {
     }
 
     /// Rotates the refresh token. The backend invalidates the old refresh
-    /// token on every rotation, so BOTH returned tokens must be stored —
+    /// token on every rotation, so BOTH returned tokens must be stored:
     /// keeping the old refresh token would trip reuse detection and revoke
     /// the whole session family.
     func refreshAccessToken(completion: @escaping @Sendable (Result<String, Error>) -> Void) {

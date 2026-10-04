@@ -8,9 +8,8 @@
 import SwiftUI
 
 /// Where you enter a code a friend shared. Joining is invite-only, and this
-/// is the one place to do it — previously the field lived inside your own
-/// party setup, so joining a friend meant first creating a party you did not
-/// want.
+/// is the one place to do it, straight from Home, so joining a friend never
+/// means first creating a party of your own.
 struct HomeJoinSheet: View {
 
     // MARK: - Properties

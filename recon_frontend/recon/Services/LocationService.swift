@@ -25,10 +25,9 @@ final class LocationService: NSObject, ObservableObject {
 
     /// Every caller waiting on the current lookup.
     ///
-    /// This was a single optional, so a second request before the first
-    /// resolved overwrote it and the first caller's completion was never
-    /// called — Home asks for a location on appear, and starting a party
-    /// straight afterwards left Home waiting forever.
+    /// A list, not a single completion: Home asks for a location on appear,
+    /// and starting a party straight afterwards asks again before the first
+    /// lookup resolves. Both callers have to hear back.
     private var pending: [(Result<CLLocation, Error>) -> Void] = []
 
     private var timeout: DispatchWorkItem?

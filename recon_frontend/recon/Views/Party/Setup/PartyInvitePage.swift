@@ -10,9 +10,9 @@ import UIKit
 import Combine
 
 /// The second party setup page: share the code and watch people arrive.
-/// Entering someone else's code lives on the home screen, not here — this is
-/// your party, and offering to join a different one from inside it meant
-/// creating a party just to leave it.
+/// Entering someone else's code lives on the home screen, not here: this is
+/// your party, and joining a different one from inside it would mean
+/// leaving the party you just made.
 struct PartyInvitePage: View {
 
     // MARK: - Properties

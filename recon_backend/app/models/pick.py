@@ -16,7 +16,7 @@ class FinalPick(db.Model):
     """One member's single favorite, chosen from what they swiped right on.
 
     Keyed on (party_id, user_id): a member has exactly one final pick and
-    re-submitting replaces it. The composite FK mirrors swipes — a pick can
+    re-submitting replaces it. The composite FK mirrors swipes: a pick can
     only name an option that belongs to the same party.
     """
 

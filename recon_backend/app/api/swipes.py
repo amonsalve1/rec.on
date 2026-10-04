@@ -14,8 +14,8 @@ bp = Blueprint("swipes", __name__)
 def record(public_id):
     """Record the caller's verdict on one option.
 
-    Re-swiping the same option overwrites the earlier verdict — the primary
-    key makes a duplicate row impossible — so the client can safely retry.
+    Re-swiping the same option overwrites the earlier verdict (the primary
+    key makes a duplicate row impossible), so the client can safely retry.
     """
     data = body()
     option_id = data.get("option_id")

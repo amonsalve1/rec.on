@@ -55,7 +55,7 @@ def party_scope(param="public_id", require_role=None, require_state=None):
     authenticated read any party's votes and trigger its result.
 
     A non-member gets 404, not 403, so this can't be used to test whether a
-    party exists. Once membership is established, 403 is fine — the caller
+    party exists. Once membership is established, 403 is fine: the caller
     already knows it's there.
     """
 

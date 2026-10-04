@@ -1,10 +1,8 @@
 from .base import PlaceCandidate, ProviderUnavailable
 
-# Moved off the client, where these lived in PartyOptionsGenerator and were
-# served silently whenever location or Overpass failed. A party built from
-# these is still a real party, but it is recorded as provider='seed' so a
-# degraded one is diagnosable afterwards instead of looking identical to a
-# party built from real nearby places.
+# The fallback when location or Overpass fails. A party built from these is
+# still a real party, but it is recorded as provider='seed' so a degraded one
+# can be told apart afterwards from a party built from real nearby places.
 # (name, tags, wikidata_id). An id is present only where it was verified to
 # name the right entity AND that entity has a P18 image; everything else is
 # None and the client draws its own lettered card. Do not add an id from

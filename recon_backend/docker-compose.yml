@@ -6,8 +6,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recon}
       POSTGRES_DB: recon
     volumes:
-      # the old compose file had no volumes key at all, so every container
-      # restart silently wiped every account.
+      # without a named volume, every container restart wipes every account.
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U recon"]

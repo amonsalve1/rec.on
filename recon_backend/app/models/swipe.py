@@ -19,7 +19,7 @@ class Swipe(db.Model):
 
     The primary key is (party_id, option_id, user_id), so a re-swipe is an
     update, never a duplicate row. The composite FK onto (party_id, id) of
-    options — the reason uq_options_party_id exists — makes it structurally
+    options (the reason uq_options_party_id exists) makes it structurally
     impossible to record a swipe against an option from a different party.
     """
 

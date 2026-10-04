@@ -4,7 +4,7 @@ from flask import jsonify
 class ApiError(Exception):
     """Base for anything we deliberately return to a client.
 
-    The `code` is the contract — clients branch on it. `message` is for
+    The `code` is the contract: clients branch on it. `message` is for
     humans reading logs, never for client-side logic.
     """
 
@@ -74,7 +74,7 @@ def register_error_handlers(app):
 
     @app.errorhandler(Exception)
     def handle_unexpected(err):
-        # the old backend returned str(e) straight to the client, which leaked
-        # schema and internal paths. log it, tell the client nothing.
+        # str(e) can carry schema names and internal paths, so it goes to the
+        # log and the client only learns that something failed.
         app.logger.exception("unhandled error: %s", err)
         return ApiError("internal_error", "something went wrong", 500).response()

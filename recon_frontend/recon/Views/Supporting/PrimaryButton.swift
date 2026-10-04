@@ -9,9 +9,8 @@ import SwiftUI
 
 /// The app's one call to action: a full-width pill carrying the brand ramp.
 ///
-/// The gradient was previously written out at each call site, which is how the
-/// sign-in flow ended up with white-on-cream buttons that read as disabled even
-/// when they were not. Every primary action resolves through this view instead.
+/// Every primary action goes through this view, so the gradient is defined
+/// once and a button can never end up white-on-cream and look disabled.
 struct PrimaryButton: View {
 
     // MARK: - Properties

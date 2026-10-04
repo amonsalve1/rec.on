@@ -24,7 +24,7 @@ struct RecOnApp: App {
             RootView()
                 /// The canvas is a designed warm paper and every surface in the
                 /// app is painted light. Following the system scheme only meant
-                /// system-drawn chrome — keyboards, sheets, menus, alerts —
+                /// system-drawn chrome (keyboards, sheets, menus, alerts)
                 /// arriving dark on top of it.
                 .preferredColorScheme(.light)
         }

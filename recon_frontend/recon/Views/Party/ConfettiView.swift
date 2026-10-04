@@ -13,7 +13,7 @@ import SwiftUI
 /// sideways, tumbles as it goes, turns edge-on so it seems to vanish and come
 /// back, and reaches a terminal speed after a short acceleration. Every piece
 /// is drawn from elapsed time rather than animated, so a redraw of the page
-/// behind it — the winner's photo finishing its download, say — cannot leave
+/// behind it (the winner's photo finishing its download, say) cannot leave
 /// the fall stranded half way down.
 struct ConfettiView: View {
 

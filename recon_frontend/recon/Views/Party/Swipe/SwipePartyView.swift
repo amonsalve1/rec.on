@@ -147,7 +147,7 @@ struct SwipePartyView: View {
 
     // MARK: - Helpers
 
-    /// Fetches the liked options, then routes to the pick screen — or
+    /// Fetches the liked options, then routes to the pick screen, or
     /// straight to the waiting room when nothing was liked.
     private func continueToPick() {
         guard !loadingLiked else { return }

@@ -174,7 +174,7 @@ extension RecOnAPI {
     }
 
     /// Host-only: mints the party's invite code. The plaintext code exists
-    /// only in this response — the backend stores an HMAC.
+    /// only in this response; the backend stores an HMAC.
     func mintInvite(sessionId: String, completion: @escaping @Sendable (Result<String, Error>) -> Void) {
         let url = endpoint("parties/\(sessionId)/invite")
         session.request(url, method: .post, headers: headers)

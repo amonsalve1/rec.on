@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// The first-launch intro: the brand moment, an interactive swipe tutorial,
-/// and a handoff — three pages traced by a squiggle progress line.
+/// and a handoff: three pages traced by a squiggle progress line.
 struct OnboardingView: View {
 
     // MARK: - Properties

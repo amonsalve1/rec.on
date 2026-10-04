@@ -27,8 +27,8 @@ struct ParticipantDTO: Codable, Identifiable, Sendable, Hashable {
     }
 }
 
-/// A party as serialized by the backend's party_dict. Kept under the old
-/// SessionDTO name so the flow code reads the same.
+/// A party as serialized by the backend's party_dict. The flow code calls a
+/// party a session, so the type keeps that name.
 struct SessionDTO: Codable, Sendable {
     let id: String
     let title: String
@@ -42,7 +42,7 @@ struct SessionDTO: Codable, Sendable {
     let winner: OptionDTO?
     let members: [ParticipantDTO]
 
-    /// Legacy accessors, so call sites written against the old API read on.
+    /// The names the flow code uses for the same fields.
     var createdBy: Int { hostUserId }
     var status: String { state }
     var participants: [ParticipantDTO]? { members }

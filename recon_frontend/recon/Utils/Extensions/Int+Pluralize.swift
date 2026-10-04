@@ -15,7 +15,7 @@ extension Int {
     /// is "1 pick", `3.counted("pick")` is "3 picks".
     ///
     /// Counted nouns were being written as `"\(n) picks"`, which reads "1
-    /// picks" whenever there is exactly one — and one is the common case for
+    /// picks" whenever there is exactly one, and one is the common case for
     /// a party you started by yourself.
     ///
     /// - Parameter plural: an explicit form for nouns that do not simply take

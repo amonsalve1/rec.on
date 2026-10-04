@@ -53,7 +53,7 @@ struct PartyResultsFlowView: View {
 
     /// The cards the randomizer cycles through. Under approval voting the
     /// winner isn't necessarily anyone's final pick, so it is appended when
-    /// the pick pool doesn't already contain it — the carousel must be able
+    /// the pick pool doesn't already contain it, because the carousel must be able
     /// to land on it.
     private var carouselPool: [PartyCandidate] {
         guard let backendWinner else { return candidates }

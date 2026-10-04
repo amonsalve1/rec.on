@@ -1,87 +1,68 @@
-# RecOn Backend — Spec
+# How the backend works, and why
 
-## Why this project exists
+## The split
 
-The Flask backend was never finished, so API logic and business rules ended up
-in the Swift client. This project moves the boundary back to where it belongs:
-the server owns the data, the rules, and every third-party call, and the client
-renders state.
+The server owns the data, the rules and every call to a third party. The
+Swift app draws state and calls `/v1`. Our first version did it the other way
+round: the backend was never finished, so vote counting and venue lookups
+ended up in the client. Moving them to the server is most of what this repo
+is.
 
-## Security issues to fix first
+## Security
 
-| Issue | Where | Fix |
-|---|---|---|
-| Plain HTTP to a raw IP | `APIConfig.swift` — `http://34.21.78.117` | HTTPS, domain name, base URL from build config |
-| Auth tokens in `UserDefaults` | Client | Move to Keychain |
-| Third-party lookups from the device | Places/venue lookup | Proxy through the server |
-
-Proxying the places lookup is the strongest argument for the backend existing
-at all: it keeps any future provider key server-side and makes caching possible.
-
-## Build order
-
-Each step leaves the app in a working state.
-
-1. **Auth** — bcrypt password hashing, short-lived access tokens, rotating
-   refresh tokens with reuse detection
-2. **Party sessions** — create, join by invite code, state stored server-side
-3. **Vote aggregation** — a real preference-aggregation rule, computed on the
-   server
-4. **Places proxy** — server-side provider calls with a Postgres cache and a
-   seed fallback
-5. **Deploy** — behind a domain with TLS
-
-Polling first; WebSockets only if polling demonstrably fails. Party state
-changes are low-frequency and a version counter with ETags makes each poll
-cheap, so the added infrastructure is not justified yet.
-
-## Vote aggregation
-
-Random selection from everyone's favorites is a weak mechanic — it ignores
-every swipe and treats one arbitrary pick per person as the whole signal. The
-options considered:
-
-- **Approval voting** — each option is approved or not; highest approval count
-  wins
-- **Borda count** — points by rank position, summed across voters
-- **Condorcet** — the option that beats every other head-to-head, if one exists
-
-**Decision: approval voting, with a final-pick-weighted lottery to break ties.**
-The swipe deck already produces exactly one approve/reject verdict per member
-per option, so approval voting uses the full set of signals the app collects
-without asking anyone to rank anything. Borda would need a ranking UI that
-does not exist and that lengthens the interaction the app is built to shorten.
-Condorcet can produce no winner at all, which is unacceptable for a group that
-needs to pick dinner. Ties go to a lottery weighted by final picks, so the
-mechanic keeps a moment of chance without letting chance override consensus.
-
-State questions the rule has to answer:
-
-- **Simultaneous votes** — the swipes table is keyed on
-  `(party_id, option_id, user_id)`, so a re-swipe updates rather than
-  duplicates, and the spin is idempotent: once a winner exists, later spins
-  return the same party.
-- **Joining mid-session** — not allowed. Joining is lobby-only, which fixes the
-  denominator and makes "3 of 4 have voted" a true statement.
-- **A client that drops out** — leaving removes the member from both the
-  electorate and the spin gate, and an expiry sweeper closes parties whose
-  deadline passes, so one vanished client cannot wedge a vote open forever.
-
-## Conventions
-
-- Commit after each logical unit of work; one concern per commit
-- Commit messages in imperative mood: "Add session join endpoint"
-- No secrets in source; everything from environment config
-- Tests pass before any commit to main
-
-## Measurements
-
-Captured before optimizing as well as after — both halves of the number are
-recorded in `docs/measurements.md`.
-
-| Metric | How |
+| Problem | What we did |
 |---|---|
-| Endpoint p50/p95/p99 | `ab -n 1000 -c 50 http://localhost:5001/v1/...` |
-| Query execution time | `EXPLAIN ANALYZE` before and after an index change |
-| Cache effect | Venue lookup latency, cold vs warm |
-| Python hot spots | `cProfile` on the aggregation path |
+| The app talked plain HTTP to a raw IP address | Release builds are HTTPS-only, with the base URL set per build configuration (the production domain isn't live yet) |
+| Auth tokens sat in `UserDefaults` | Moved to the Keychain, with a one-time migration at launch |
+| Venue lookups ran on the device | Proxied through the server |
+
+The venue proxy is the best argument for having a backend at all. Any
+provider key stays on the server, and lookups can be cached in Postgres for
+everyone instead of repeated on every phone.
+
+## Picking a winner
+
+The first mechanic drew at random from everyone's favorite. That throws away
+every swipe and treats one pick per person as the whole signal. We looked at
+three real voting rules:
+
+- **Approval voting:** each option is approved or not, and the most approvals
+  wins.
+- **Borda count:** points by rank position, summed across voters.
+- **Condorcet:** the option that beats every other one head to head, if there
+  is one.
+
+We went with **approval voting, with ties broken by a lottery weighted on
+final picks.** The swipe deck already gives us exactly one yes or no per
+person per option, so approval voting uses everything the app collects
+without making anyone rank anything. Borda would need a ranking screen, which
+makes the app slower at the one thing it's for. Condorcet can end with no
+winner, and a group trying to pick dinner needs one. The weighted lottery
+keeps a moment of chance at the end without letting chance beat a real
+majority.
+
+The rule also has to survive real groups:
+
+- **Two people voting at once.** Swipes are keyed on
+  `(party_id, option_id, user_id)`, so swiping again updates the old answer
+  instead of adding a second one. Spinning is idempotent: once a party has a
+  winner, spinning again returns the same one.
+- **Someone joining halfway.** Not allowed. You can only join in the lobby,
+  so the number of voters is fixed and "3 of 4 have voted" is always true.
+- **Someone disappearing.** Leaving removes you from the vote and from the
+  count the spin waits on, and a sweeper closes parties whose deadline has
+  passed, so one dead phone can't hold a vote open forever.
+
+## Polling, not WebSockets
+
+A party changes at the speed people swipe, not in milliseconds. Every
+change bumps a version number that doubles as an ETag, so a poll that finds
+nothing new is a cheap 304. WebSockets would add infrastructure for no gain
+we could measure, so the app polls.
+
+## Measuring
+
+Every optimization is measured before and after, with the exact commands, in
+[docs/measurements.md](docs/measurements.md): endpoint latency under load
+with `ab`, query plans with `EXPLAIN ANALYZE`, venue lookups cold and warm,
+and `cProfile` on the vote-counting path.

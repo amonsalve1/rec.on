@@ -69,7 +69,7 @@ struct HomeHeaderView: View {
         }
     }
 
-    /// Time-of-day line above the greeting — a small sign the screen is live
+    /// Time-of-day line above the greeting, a small sign the screen is live
     /// rather than a static menu.
     private var dayPart: String {
         switch Calendar.current.component(.hour, from: Date()) {

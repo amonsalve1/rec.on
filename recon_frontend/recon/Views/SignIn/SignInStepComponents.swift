@@ -75,8 +75,8 @@ struct SignInStepDots: View {
 /// A placeholder in the app's secondary ink.
 ///
 /// Passed as a field's `prompt:` rather than its title, because a bare title
-/// placeholder is drawn by the system and picked up the app accent — which is
-/// how these read as blue text on a warm orange screen.
+/// placeholder is drawn by the system in the app accent, which reads as blue
+/// text on a warm orange screen.
 func signInPrompt(_ text: String) -> Text {
     Text(text)
         .foregroundColor(Constants.Colors.inkSecondary)
@@ -84,9 +84,9 @@ func signInPrompt(_ text: String) -> Text {
 
 /// A text field styled for the warm canvas.
 ///
-/// The fields were white with no border, which on cream made them read as the
-/// same surface as the white button beneath them — field and action looked like
-/// one element. A hairline separates them.
+/// A hairline border, because a white field on cream reads as the same
+/// surface as the white button beneath it, and field and action blur into one
+/// element.
 struct SignInField<Field: View>: View {
 
     // MARK: - Properties

@@ -10,10 +10,10 @@ import Security
 
 /// Keychain-backed storage for the auth token pair.
 ///
-/// Tokens used to live in UserDefaults, which is a plaintext plist on disk
-/// and lands in unencrypted backups. Generic-password keychain items are
-/// encrypted at rest and gated on device unlock. `bootstrap()` migrates any
-/// tokens still sitting in UserDefaults and deletes them there.
+/// Not UserDefaults: that is a plaintext plist on disk and lands in
+/// unencrypted backups. Generic-password keychain items are encrypted at rest
+/// and gated on device unlock. `bootstrap()` moves any tokens an older install
+/// left in UserDefaults into the keychain and deletes them there.
 enum TokenStore {
 
     // MARK: - Properties
@@ -49,8 +49,8 @@ enum TokenStore {
         delete(account: refreshAccount)
     }
 
-    /// One-time migration from the old UserDefaults storage. Call at launch,
-    /// before anything reads a token.
+    /// Moves tokens from UserDefaults into the keychain, once. Call at
+    /// launch, before anything reads a token.
     static func bootstrap() {
         let defaults = UserDefaults.standard
 
